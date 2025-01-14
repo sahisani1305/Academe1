@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="home-container">
+        <h1>Welcome to Academe</h1>
+        <p>Academe is your go-to platform for learning and growth. Join us and embark on an exciting journey of knowledge and discovery.</p>
+        <div class="button-container">
+            <a href="{% url 'login' %}" class="btn">Login</a>
+            <a href="{% url 'signup' %}" class="btn">Signup</a>
+        </div>
+    </div>
+{% endblock %}

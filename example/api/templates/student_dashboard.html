@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="dashboard-container">
+        <header>
+            <h1>Student Dashboard</h1>
+            <p>Welcome, {{ user.username }}!</p>
+            <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+        </header>
+
+        <div class="action-buttons">
+            <button onclick="showSection('notes')">See Notes</button>
+            <button onclick="showSection('lectures')">See Lectures</button>
+            <button onclick="showSection('assignments')">See Assignments</button>
+        </div>
+
+        <div id="notes-section" class="section" style="display: none;">
+            <h2>Uploaded Notes</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Class Name</th>
+                            <th>Year</th>
+                            <th>Semester</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Uploaded by</th>
+                            <th>Uploaded at</th>
+                            <th>View</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in uploaded_pdfs %}
+                            <tr>
+                                <td>{{ file.class_name }}</td>
+                                <td>{{ file.year }}</td>
+                                <td>{{ file.semester }}</td>
+                                <td>{{ file.title }}</td>
+                                <td>{{ file.description }}</td>
+                                <td>{{ file.teacher.username }}</td>
+                                <td>{{ file.uploaded_at }}</td>
+                                <td>
+                                    <a href="{{ file.file.url }}" target="_blank" class="btn btn-small">View PDF</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="lectures-section" class="section" style="display: none;">
+            <h2>Uploaded Lecture Videos</h2>
+            <div class="videos-container">
+                {% for video in uploaded_videos %}
+                    <div class="video-card">
+                        <video controls>
+                            <source src="{{ video.file.url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="video-details">
+                            <h3>{{ video.title }}</h3>
+                            <p><strong>Class Name:</strong> {{ video.class_name }}</p>
+                            <p><strong>Year:</strong> {{ video.year }}</p>
+                            <p><strong>Semester:</strong> {{ video.semester }}</p>
+                            <p><strong>Description:</strong> {{ video.description }}</p>
+                            <p><strong>Uploaded by:</strong> {{ video.teacher.username }}</p>
+                            <p><strong>Uploaded at:</strong> {{ video.uploaded_at }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="assignments-section" class="section" style="display: none;">
+            <h2>Uploaded Assignments</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Class Name</th>
+                            <th>Year</th>
+                            <th>Semester</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Uploaded by</th>
+                            <th>Uploaded at</th>
+                            <th>View</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in uploaded_assignments %}
+                            <tr>
+                                <td>{{ assignment.class_name }}</td>
+                                <td>{{ assignment.year }}</td>
+                                <td>{{ assignment.semester }}</td>
+                                <td>{{ assignment.title }}</td>
+                                <td>{{ assignment.description }}</td>
+                                <td>{{ assignment.teacher.username }}</td>
+                                <td>{{ assignment.uploaded_at }}</td>
+                                <td>
+                                    <a href="{{ assignment.file.url }}" target="_blank" class="btn btn-small">View Assignment</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
