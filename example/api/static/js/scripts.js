@@ -1,4 +1,3 @@
-// scripts.js
 document.addEventListener('DOMContentLoaded', function() {
     const teacherIdInput = document.querySelector('input[name="teacher_id"]');
     
@@ -8,26 +7,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
 function resetForm() {
     document.getElementById('signup-form').reset();
 }
 
 function showSection(section) {
-    document.getElementById('notes-section').style.display = 'none';
-    document.getElementById('lectures-section').style.display = 'none';
-    document.getElementById('assignments-section').style.display = 'none';
+    var sections = ['notes-section', 'lectures-section', 'assignments-section', 'requests-section', 'activity-section', 'deleted-section', 'teachers-section', 'students-section'];
 
-    document.getElementById(section + '-section').style.display = 'block';
-}
-function showSection(section) {
-    document.getElementById('requests-section').style.display = 'none';
-    document.getElementById('activity-section').style.display = 'none';
-    document.getElementById('deleted-section').style.display = 'none';
-    document.getElementById('teachers-section').style.display = 'none';
-    document.getElementById('students-section').style.display = 'none';
+    sections.forEach(function(id) {
+        var element = document.getElementById(id);
+        if (element) {
+            element.style.display = 'none';
+        }
+    });
 
-    document.getElementById(section + '-section').style.display = 'block';
+    var selectedSection = document.getElementById(section + '-section');
+    if (selectedSection) {
+        selectedSection.style.display = 'block';
+    }
 }
+
 function updateSemesters() {
     const year = document.getElementById('year').value;
     const semesterSelect = document.getElementById('semester');
@@ -45,5 +45,28 @@ function updateSemesters() {
     } else if (year === '4') {
         semesterSelect.innerHTML += '<option value="7">Semester 7</option>';
         semesterSelect.innerHTML += '<option value="8">Semester 8</option>';
+    }
+}
+
+function toggleStudentFields() {
+    var isTeacherChecked = document.getElementById('is_teacher').checked;
+    var isStudentChecked = document.getElementById('is_student').checked;
+    var studentFields = document.getElementById('student-fields');
+    
+    if (isStudentChecked) {
+        studentFields.style.display = 'block';
+        document.querySelectorAll('#student-fields input, #student-fields select').forEach(function(input) {
+            input.required = true;
+        });
+        document.getElementById('is_teacher').checked = false;
+    } else {
+        studentFields.style.display = 'none';
+        document.querySelectorAll('#student-fields input, #student-fields select').forEach(function(input) {
+            input.required = false;
+        });
+    }
+
+    if (isTeacherChecked) {
+        document.getElementById('is_student').checked = false;
     }
 }

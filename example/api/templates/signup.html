@@ -21,9 +21,34 @@
             </div>
             <div class="form-group checkbox-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" name="is_teacher">
+                    <input type="checkbox" name="is_teacher" id="is_teacher" onchange="toggleStudentFields()">
                     <span>Apply as Teacher</span>
                 </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="is_student" id="is_student" onchange="toggleStudentFields()">
+                    <span>Apply as Student</span>
+                </label>
+            </div>
+            <div id="student-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="year">Year:</label>
+                    <select name="year" id="year" required onchange="updateSemesters()">
+                        <option value="">Select Year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="semester">Semester:</label>
+                    <select name="semester" id="semester" required>
+                        <option value="">Select Semester</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="class_name" placeholder="Class Name" required>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary">Signup</button>
         </form>

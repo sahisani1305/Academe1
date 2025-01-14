@@ -34,33 +34,71 @@ def login_view(request):
             messages.error(request, 'Invalid username or password. Please try again.')
     return render(request, 'login.html')
 
+import re
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User, Group
+from django.contrib import messages
+from pymongo import MongoClient
+
+# Connect to MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client.academe
+
 def signup_view(request):
     if request.method == 'POST':
         name = request.POST['name']
         id_number = request.POST['id_number']
         username = request.POST['username']
         password = request.POST['password']
-        is_teacher = request.POST.get('is_teacher', False)
+        is_teacher = 'is_teacher' in request.POST
+        is_student = 'is_student' in request.POST
 
         # Validate username
         if not re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[\W_]).{8,}$', username):
             messages.error(request, 'Username must be longer than 8 characters, contain a special character, and an alphanumeric combination.')
-            return render(request, 'signup.html')
+            return render(request, 'signup.html', {
+                'name': name,
+                'id_number': id_number,
+                'username': username,
+                'is_teacher': is_teacher,
+                'is_student': is_student,
+                'year': request.POST.get('year', ''),
+                'semester': request.POST.get('semester', ''),
+                'class_name': request.POST.get('class_name', '')
+            })
 
         # Validate password
         if not re.match(r'^(?=.*[A-Z])(?=.*\W).+$', password):
             messages.error(request, 'Password must contain at least one uppercase letter and one special character.')
-            return render(request, 'signup.html')
+            return render(request, 'signup.html', {
+                'name': name,
+                'id_number': id_number,
+                'username': username,
+                'is_teacher': is_teacher,
+                'is_student': is_student,
+                'year': request.POST.get('year', ''),
+                'semester': request.POST.get('semester', ''),
+                'class_name': request.POST.get('class_name', '')
+            })
 
         # Check if username is unique
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Username is already taken.')
-            return render(request, 'signup.html')
+            return render(request, 'signup.html', {
+                'name': name,
+                'id_number': id_number,
+                'username': username,
+                'is_teacher': is_teacher,
+                'is_student': is_student,
+                'year': request.POST.get('year', ''),
+                'semester': request.POST.get('semester', ''),
+                'class_name': request.POST.get('class_name', '')
+            })
 
         # Create Django user
         user = User.objects.create_user(username=username, password=password)
         
-        # Store details in MongoDB
+        # Store common details in MongoDB
         user_details = {
             "name": name,
             "id_number": id_number,
@@ -74,12 +112,37 @@ def signup_view(request):
             db.teacher.insert_one(user_details)
             TeacherApprovalRequest.objects.create(user=user)
             messages.info(request, 'Your request to become a teacher is pending approval. Contact the admin for more information.')
-        else:
-            assign_student_role(user)
-            db.student.insert_one(user_details)
-            messages.success(request, 'You have successfully signed up as a student. Please go back to the login page.')
+        elif is_student:
+            # Handle student-specific details
+            year = request.POST['year']
+            semester = request.POST['semester']
+            class_name = request.POST['class_name']
 
-        return render(request, 'signup.html')
+            # Format class_name
+            class_name = ' '.join(class_name.upper().split())
+            
+            user_details.update({
+                "year": year,
+                "semester": semester,
+                "class_name": class_name
+            })
+            db.student.insert_one(user_details)
+            assign_student_role(user)
+            messages.success(request, 'You have successfully signed up as a student. Please go back to the login page.')
+        else:
+            messages.error(request, 'Please select either Teacher or Student role.')
+            return render(request, 'signup.html', {
+                'name': name,
+                'id_number': id_number,
+                'username': username,
+                'is_teacher': is_teacher,
+                'is_student': is_student,
+                'year': request.POST.get('year', ''),
+                'semester': request.POST.get('semester', ''),
+                'class_name': request.POST.get('class_name', '')
+            })
+
+        return redirect('index')  # Redirect to the login or index page
     return render(request, 'signup.html')
 
 def assign_student_role(user):
@@ -88,6 +151,7 @@ def assign_student_role(user):
     user.groups.add(student_group)
     user.is_staff = False
     user.save()
+
 
 def approve_teacher(request, pk):
     approval_request = TeacherApprovalRequest.objects.get(pk=pk)
@@ -107,15 +171,49 @@ def reject_teacher(request, pk):
     approval_request.delete()
     return redirect('admin_dashboard')
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import PDFFile, VideoFile, AssignmentFile
+
+@login_required
 def student_dashboard(request):
-    uploaded_pdfs = PDFFile.objects.all()
-    uploaded_videos = VideoFile.objects.all()
-    uploaded_assignments = AssignmentFile.objects.all()
+    # Get the logged-in student's details
+    student = request.user
+    student_details = db.student.find_one({"username": student.username})
+
+    print(f"Student Username: {student.username}")  # Debug print
+
+    if student_details:
+        year = student_details.get("year")
+        semester = student_details.get("semester")
+        class_name = student_details.get("class_name")
+        
+        print(f"Student Details: Year - {year}, Semester - {semester}, Class Name - {class_name}")  # Debug print
+
+        # Format class_name to match the formatting used during upload
+        class_name = ' '.join(class_name.upper().split())
+
+        # Filter files based on the student's details
+        uploaded_pdfs = PDFFile.objects.filter(year=year, semester=semester, class_name=class_name)
+        uploaded_videos = VideoFile.objects.filter(year=year, semester=semester, class_name=class_name)
+        uploaded_assignments = AssignmentFile.objects.filter(year=year, semester=semester, class_name=class_name)
+        
+        print(f"Uploaded PDFs: {uploaded_pdfs.count()}")  # Debug print
+        print(f"Uploaded Videos: {uploaded_videos.count()}")  # Debug print
+        print(f"Uploaded Assignments: {uploaded_assignments.count()}")  # Debug print
+    else:
+        print("Student details not found in the database.")  # Debug print
+        uploaded_pdfs = []
+        uploaded_videos = []
+        uploaded_assignments = []
+
     return render(request, 'student_dashboard.html', {
         'uploaded_pdfs': uploaded_pdfs,
         'uploaded_videos': uploaded_videos,
         'uploaded_assignments': uploaded_assignments,
     })
+
+
 
 def teacher_dashboard(request):
     if request.method == 'POST':
@@ -263,15 +361,15 @@ def fetch_data_from_db():
 
     # Fetch students data
     students_collection = db.student
-    students = list(students_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1}))
+    students = list(students_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1, "year": 1, "semester": 1, "class_name": 1}))
 
     # Fetch activity logs
     activity_logs_collection = db.uploads
-    activity_logs = list(activity_logs_collection.find({}, {"_id": 0, "teacher": 1, "action": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "timestamp": 1}))
+    activity_logs = list(activity_logs_collection.find({}, {"_id": 0, "teacher": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "uploaded_at": 1}))
 
     # Fetch deleted logs
     deleted_logs_collection = db.deleted
-    deletion_logs = list(deleted_logs_collection.find({}, {"_id": 0, "teacher": 1, "action": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "timestamp": 1}))
+    deletion_logs = list(deleted_logs_collection.find({}, {"_id": 0, "teacher": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "deleted_at": 1}))
 
     return teachers, students, activity_logs, deletion_logs
 
@@ -295,7 +393,7 @@ def delete_teacher(request, username):
         try:
             user = User.objects.get(username=username)
             # Remove teacher from MongoDB
-            db.teachers.delete_one({"username": username})
+            db.teacher.delete_one({"username": username})
             # Remove teacher from Django user table
             user.delete()
 
@@ -309,7 +407,7 @@ def delete_student(request, username):
         try:
             user = User.objects.get(username=username)
             # Remove student from MongoDB
-            db.students.delete_one({"username": username})
+            db.student.delete_one({"username": username})
             # Remove student from Django user table
             user.delete()
 

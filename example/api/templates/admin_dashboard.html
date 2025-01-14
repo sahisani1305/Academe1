@@ -48,7 +48,6 @@
                     <thead>
                         <tr>
                             <th>Teacher</th>
-                            <th>Action</th>
                             <th>File Type</th>
                             <th>Class Name</th>
                             <th>Year</th>
@@ -61,15 +60,14 @@
                     <tbody>
                         {% for log in activity_logs %}
                             <tr>
-                                <td>{{ log.teacher.username }}</td>
-                                <td>{{ log.action }}</td>
+                                <td>{{ log.teacher }}</td>
                                 <td>{{ log.file_type }}</td>
                                 <td>{{ log.class_name }}</td>
                                 <td>{{ log.year }}</td>
                                 <td>{{ log.semester }}</td>
                                 <td>{{ log.title }}</td>
                                 <td>{{ log.description }}</td>
-                                <td>{{ log.timestamp }}</td>
+                                <td>{{ log.uploaded_at }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -82,7 +80,6 @@
                     <thead>
                         <tr>
                             <th>Teacher</th>
-                            <th>Action</th>
                             <th>File Type</th>
                             <th>Class Name</th>
                             <th>Year</th>
@@ -95,15 +92,14 @@
                     <tbody>
                         {% for log in deletion_logs %}
                             <tr>
-                                <td>{{ log.teacher.username }}</td>
-                                <td>{{ log.action }}</td>
+                                <td>{{ log.teacher }}</td>
                                 <td>{{ log.file_type }}</td>
                                 <td>{{ log.class_name }}</td>
                                 <td>{{ log.year }}</td>
                                 <td>{{ log.semester }}</td>
                                 <td>{{ log.title }}</td>
                                 <td>{{ log.description }}</td>
-                                <td>{{ log.timestamp }}</td>
+                                <td>{{ log.deleted_at }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -146,6 +142,9 @@
                         <tr>
                             <th>Name</th>
                             <th>ID Number</th>
+                            <th>Year</th>
+                            <th>Semester</th>
+                            <th>Class Name</th>
                             <th>Username</th>
                             <th>Actions</th>
                         </tr>
@@ -155,6 +154,9 @@
                             <tr>
                                 <td>{{ student.name }}</td>
                                 <td>{{ student.id_number }}</td>
+                                <td>{{ student.year }}</td>
+                                <td>{{ student.semester }}</td>
+                                <td>{{ student.class_name }}</td>
                                 <td>{{ student.username }}</td>
                                 <td>
                                     <form method="POST" action="{% url 'delete_student' student.username %}">
