@@ -49,16 +49,3 @@ class ActivityLog(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
 
-class Teacher(models.Model):
-    name = models.CharField(max_length=100)
-    id_number = models.CharField(max_length=20)
-    username = models.CharField(max_length=100)
-    def __str__(self):
-        return self.username
-
-class Student(models.Model):
-    name = models.CharField(max_length=100)
-    id_number = models.CharField(max_length=20)
-    username = models.CharField(max_length=100)
-    def __str__(self):
-        return self.username

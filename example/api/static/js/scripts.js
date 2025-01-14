@@ -19,7 +19,15 @@ function showSection(section) {
 
     document.getElementById(section + '-section').style.display = 'block';
 }
+function showSection(section) {
+    document.getElementById('requests-section').style.display = 'none';
+    document.getElementById('activity-section').style.display = 'none';
+    document.getElementById('deleted-section').style.display = 'none';
+    document.getElementById('teachers-section').style.display = 'none';
+    document.getElementById('students-section').style.display = 'none';
 
+    document.getElementById(section + '-section').style.display = 'block';
+}
 function updateSemesters() {
     const year = document.getElementById('year').value;
     const semesterSelect = document.getElementById('semester');

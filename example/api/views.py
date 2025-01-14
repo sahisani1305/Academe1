@@ -4,10 +4,9 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.contrib import messages
 from pymongo import MongoClient
 import re
-from .models import TeacherApprovalRequest, ActivityLog
 from django.contrib.auth import logout
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import PDFFile, VideoFile, AssignmentFile, Teacher, Student
+from .models import PDFFile, VideoFile, AssignmentFile, TeacherApprovalRequest, ActivityLog
 from .forms import UploadFileForm
 import datetime
 
@@ -32,7 +31,7 @@ def login_view(request):
             else:
                 return redirect('student_dashboard')  # Redirect to the student dashboard
         else:
-            return render(request, 'login.html', {'error': 'Invalid credentials'})
+            messages.error(request, 'Invalid username or password. Please try again.')
     return render(request, 'login.html')
 
 def signup_view(request):
@@ -74,11 +73,11 @@ def signup_view(request):
             user.save()
             db.teacher.insert_one(user_details)
             TeacherApprovalRequest.objects.create(user=user)
-            messages.info(request, 'Your request to become a teacher is pending approval.')
+            messages.info(request, 'Your request to become a teacher is pending approval. Contact the admin for more information.')
         else:
             assign_student_role(user)
             db.student.insert_one(user_details)
-            messages.success(request, 'You have successfully signed up as a student.')
+            messages.success(request, 'You have successfully signed up as a student. Please go back to the login page.')
 
         return render(request, 'signup.html')
     return render(request, 'signup.html')
@@ -247,26 +246,41 @@ def delete_file(request, file_type, pk):
 
     return redirect('teacher_dashboard')
 
-
 def logout_view(request):
     logout(request)
     return redirect('index')
+
+from pymongo import MongoClient
+
+# Connect to MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client.academe
+
+def fetch_data_from_db():
+    # Fetch teachers data
+    teachers_collection = db.teacher
+    teachers = list(teachers_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1}))
+
+    # Fetch students data
+    students_collection = db.student
+    students = list(students_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1}))
+
+    # Fetch activity logs
+    activity_logs_collection = db.uploads
+    activity_logs = list(activity_logs_collection.find({}, {"_id": 0, "teacher": 1, "action": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "timestamp": 1}))
+
+    # Fetch deleted logs
+    deleted_logs_collection = db.deleted
+    deletion_logs = list(deleted_logs_collection.find({}, {"_id": 0, "teacher": 1, "action": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "timestamp": 1}))
+
+    return teachers, students, activity_logs, deletion_logs
 
 def admin_dashboard(request):
     # Display teacher approval requests
     teacher_requests = TeacherApprovalRequest.objects.filter(is_approved=False)
 
-    # Fetch activity logs for uploaded and deleted files
-    activity_logs = ActivityLog.objects.filter(action='Uploaded file').order_by('-timestamp')
-    deletion_logs = ActivityLog.objects.filter(action='Deleted file').order_by('-timestamp')
-
-    # Fetch lists of teachers and students
-    teachers = Teacher.objects.all()
-    students = Student.objects.all()
-
-    # Debug statements
-    print("Teachers:", list(teachers))
-    print("Students:", list(students))
+    # Fetch lists of teachers and students using pymongo
+    teachers, students, activity_logs, deletion_logs = fetch_data_from_db()
 
     return render(request, 'admin_dashboard.html', {
         'teacher_requests': teacher_requests,
@@ -275,3 +289,31 @@ def admin_dashboard(request):
         'teachers': teachers,
         'students': students,
     })
+
+def delete_teacher(request, username):
+    if request.method == 'POST':
+        try:
+            user = User.objects.get(username=username)
+            # Remove teacher from MongoDB
+            db.teachers.delete_one({"username": username})
+            # Remove teacher from Django user table
+            user.delete()
+
+            messages.success(request, f'Teacher {username} has been deleted successfully.')
+        except User.DoesNotExist:
+            messages.error(request, f'Teacher {username} does not exist.')
+        return redirect('admin_dashboard')
+
+def delete_student(request, username):
+    if request.method == 'POST':
+        try:
+            user = User.objects.get(username=username)
+            # Remove student from MongoDB
+            db.students.delete_one({"username": username})
+            # Remove student from Django user table
+            user.delete()
+
+            messages.success(request, f'Student {username} has been deleted successfully.')
+        except User.DoesNotExist:
+            messages.error(request, f'Student {username} does not exist.')
+        return redirect('admin_dashboard')

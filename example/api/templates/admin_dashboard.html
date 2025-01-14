@@ -10,118 +10,162 @@
 
         <div>
             <aside>
-                <div>
-                    <h2>Teachers</h2>
-                    <ul>
-                        {% for teacher in teachers %}
-                            <li>{{ teacher.name }} ({{ teacher.id_number }}) - {{ teacher.username }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-
-                <div>
-                    <h2>Students</h2>
-                    <ul>
-                        {% for student in students %}
-                            <li>{{ student.name }} ({{ student.id_number }}) - {{ student.username }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+                <button onclick="showSection('requests')">Pending Requests</button>
+                <button onclick="showSection('activity')">Activity Log</button>
+                <button onclick="showSection('deleted')">Deleted Log</button>
+                <button onclick="showSection('teachers')">Teachers</button>
+                <button onclick="showSection('students')">Students</button>
             </aside>
 
-            <section>
-                <div>
-                    <h2>Pending Teacher Requests</h2>
-                    <table>
-                        <thead>
+            <section id="requests-section" class="section-content">
+                <h2>Pending Teacher Requests</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in teacher_requests %}
                             <tr>
-                                <th>Username</th>
-                                <th>Name</th>
-                                <th>Actions</th>
+                                <td>{{ request.user.username }}</td>
+                                <td>{{ request.user.name }}</td>
+                                <td>
+                                    <a href="{% url 'approve_teacher' request.pk %}">Approve</a>
+                                    <a href="{% url 'reject_teacher' request.pk %}">Reject</a>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {% for request in teacher_requests %}
-                                <tr>
-                                    <td>{{ request.user.username }}</td>
-                                    <td>{{ request.user.name }}</td>
-                                    <td>
-                                        <a href="{% url 'approve_teacher' request.pk %}">Approve</a>
-                                        <a href="{% url 'reject_teacher' request.pk %}">Reject</a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
 
-                <div>
-                    <h2>Teacher Activity Log</h2>
-                    <table>
-                        <thead>
+            <section id="activity-section" class="section-content" style="display:none;">
+                <h2>Teacher Activity Log</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Teacher</th>
+                            <th>Action</th>
+                            <th>File Type</th>
+                            <th>Class Name</th>
+                            <th>Year</th>
+                            <th>Semester</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in activity_logs %}
                             <tr>
-                                <th>Teacher</th>
-                                <th>Action</th>
-                                <th>File Type</th>
-                                <th>Class Name</th>
-                                <th>Year</th>
-                                <th>Semester</th>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Timestamp</th>
+                                <td>{{ log.teacher.username }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.file_type }}</td>
+                                <td>{{ log.class_name }}</td>
+                                <td>{{ log.year }}</td>
+                                <td>{{ log.semester }}</td>
+                                <td>{{ log.title }}</td>
+                                <td>{{ log.description }}</td>
+                                <td>{{ log.timestamp }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {% for log in activity_logs %}
-                                <tr>
-                                    <td>{{ log.teacher.username }}</td>
-                                    <td>{{ log.action }}</td>
-                                    <td>{{ log.file_type }}</td>
-                                    <td>{{ log.class_name }}</td>
-                                    <td>{{ log.year }}</td>
-                                    <td>{{ log.semester }}</td>
-                                    <td>{{ log.title }}</td>
-                                    <td>{{ log.description }}</td>
-                                    <td>{{ log.timestamp }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
 
-                <div>
-                    <h2>Deleted Activity Log</h2>
-                    <table>
-                        <thead>
+            <section id="deleted-section" class="section-content" style="display:none;">
+                <h2>Deleted Activity Log</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Teacher</th>
+                            <th>Action</th>
+                            <th>File Type</th>
+                            <th>Class Name</th>
+                            <th>Year</th>
+                            <th>Semester</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in deletion_logs %}
                             <tr>
-                                <th>Teacher</th>
-                                <th>Action</th>
-                                <th>File Type</th>
-                                <th>Class Name</th>
-                                <th>Year</th>
-                                <th>Semester</th>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Timestamp</th>
+                                <td>{{ log.teacher.username }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.file_type }}</td>
+                                <td>{{ log.class_name }}</td>
+                                <td>{{ log.year }}</td>
+                                <td>{{ log.semester }}</td>
+                                <td>{{ log.title }}</td>
+                                <td>{{ log.description }}</td>
+                                <td>{{ log.timestamp }}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {% for log in deletion_logs %}
-                                <tr>
-                                    <td>{{ log.teacher.username }}</td>
-                                    <td>{{ log.action }}</td>
-                                    <td>{{ log.file_type }}</td>
-                                    <td>{{ log.class_name }}</td>
-                                    <td>{{ log.year }}</td>
-                                    <td>{{ log.semester }}</td>
-                                    <td>{{ log.title }}</td>
-                                    <td>{{ log.description }}</td>
-                                    <td>{{ log.timestamp }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="teachers-section" class="section-content" style="display:none;">
+                <h2>Teachers</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>ID Number</th>
+                            <th>Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for teacher in teachers %}
+                            <tr>
+                                <td>{{ teacher.name }}</td>
+                                <td>{{ teacher.id_number }}</td>
+                                <td>{{ teacher.username }}</td>
+                                <td>
+                                    <form method="POST" action="{% url 'delete_teacher' teacher.username %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="students-section" class="section-content" style="display:none;">
+                <h2>Students</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>ID Number</th>
+                            <th>Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                            <tr>
+                                <td>{{ student.name }}</td>
+                                <td>{{ student.id_number }}</td>
+                                <td>{{ student.username }}</td>
+                                <td>
+                                    <form method="POST" action="{% url 'delete_student' student.username %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </section>
         </div>
     </div>
