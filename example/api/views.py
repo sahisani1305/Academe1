@@ -418,10 +418,10 @@ def delete_student(request, username):
 
 def clear_activity_log(request):
     if request.method == 'POST':
-        db.activity_log.delete_many({})
+        db.uploads.delete_many({})
         return redirect('admin_dashboard')
 
 def clear_deleted_log(request):
     if request.method == 'POST':
-        db.deleted_log.delete_many({})
+        db.deleted.delete_many({})
         return redirect('admin_dashboard')

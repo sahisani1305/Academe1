@@ -13,7 +13,7 @@ function resetForm() {
 }
 
 function showSection(section) {
-    var sections = ['notes-section', 'lectures-section', 'assignments-section', 'requests-section', 'activity-section', 'deleted-section', 'teachers-section', 'students-section'];
+    var sections = ['upload-section', 'notes-section', 'lectures-section', 'assignments-section', 'requests-section', 'activity-section', 'deleted-section', 'teachers-section', 'students-section', 'filter_students-section'];
 
     sections.forEach(function(id) {
         var element = document.getElementById(id);
@@ -28,9 +28,9 @@ function showSection(section) {
     }
 }
 
-function updateSemesters() {
-    const year = document.getElementById('year').value;
-    const semesterSelect = document.getElementById('semester');
+function updateSemesters(section) {
+    const year = document.getElementById(section + '-year').value; // Get the year from the correct section
+    const semesterSelect = document.getElementById(section + '-semester'); // Get the semester select for the correct section
     semesterSelect.innerHTML = '<option value="">Select Semester</option>'; // Clear previous options
 
     if (year === '1') {
@@ -68,28 +68,5 @@ function toggleStudentFields() {
 
     if (isTeacherChecked) {
         document.getElementById('is_student').checked = false;
-    }
-}
-
-
-function clearActivityLog() {
-    if (confirm('Are you sure you want to clear the activity log?')) {
-        fetch("{% url 'clear_activity_log' %}", { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                }
-            });
-    }
-}
-
-function clearDeletedLog() {
-    if (confirm('Are you sure you want to clear the deleted log?')) {
-        fetch("{% url 'clear_deleted_log' %}", { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                }
-            });
     }
 }

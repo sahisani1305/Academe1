@@ -43,7 +43,10 @@
 
             <section id="activity-section" class="section-content" style="display:none;">
                 <h2>Teacher Activity Log</h2>
-                <button onclick="clearActivityLog()" class="btn btn-danger">Clear Activity Log</button>
+                <form method="POST" action="{% url 'clear_activity_log' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Clear Activity Log</button>
+                </form>
                 <table>
                     <thead>
                         <tr>
@@ -76,7 +79,10 @@
 
             <section id="deleted-section" class="section-content" style="display:none;">
                 <h2>Deleted Activity Log</h2>
-                <button onclick="clearDeletedLog()" class="btn btn-danger">Clear Deleted Log</button>
+                <form method="POST" action="{% url 'clear_deleted_log' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Clear Deleted Log</button>
+                </form>
                 <table>
                     <thead>
                         <tr>
