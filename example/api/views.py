@@ -1,3 +1,4 @@
+import os
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login as auth_login
@@ -6,6 +7,8 @@ from pymongo import MongoClient
 import re
 from django.contrib.auth import logout
 from django.shortcuts import render, redirect, get_object_or_404
+
+from django.conf import settings
 from .models import PDFFile, VideoFile, AssignmentFile, TeacherApprovalRequest, ActivityLog
 from .forms import UploadFileForm
 import datetime
@@ -46,7 +49,7 @@ db = client.academe
 
 def signup_view(request):
     if request.method == 'POST':
-        name = request.POST['name']
+        name = request.POST['name'].upper()  # Convert name to uppercase
         id_number = request.POST['id_number']
         username = request.POST['username']
         password = request.POST['password']
@@ -84,6 +87,20 @@ def signup_view(request):
         # Check if username is unique
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Username is already taken.')
+            return render(request, 'signup.html', {
+                'name': name,
+                'id_number': id_number,
+                'username': username,
+                'is_teacher': is_teacher,
+                'is_student': is_student,
+                'year': request.POST.get('year', ''),
+                'semester': request.POST.get('semester', ''),
+                'class_name': request.POST.get('class_name', '')
+            })
+
+        # Validate full name
+        if not re.match(r'^[A-Z\s]+$', name) or len(name.split()) < 2:
+            messages.error(request, 'Please provide your full name in uppercase.')
             return render(request, 'signup.html', {
                 'name': name,
                 'id_number': id_number,
@@ -171,12 +188,12 @@ def reject_teacher(request, pk):
     approval_request.delete()
     return redirect('admin_dashboard')
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from .models import PDFFile, VideoFile, AssignmentFile
+from .forms import UploadAssignmentForm
 
-@login_required
 def student_dashboard(request):
+    teachers_collection = db.teacher
+    tchr = list(teachers_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1}))
+
     # Get the logged-in student's details
     student = request.user
     student_details = db.student.find_one({"username": student.username})
@@ -201,6 +218,44 @@ def student_dashboard(request):
         print(f"Uploaded PDFs: {uploaded_pdfs.count()}")  # Debug print
         print(f"Uploaded Videos: {uploaded_videos.count()}")  # Debug print
         print(f"Uploaded Assignments: {uploaded_assignments.count()}")  # Debug print
+
+        if request.method == 'POST':
+            # Get the teacher's username from the submitted form
+            teacher_username = request.POST.get('teacher_username')
+            form = UploadAssignmentForm(request.POST, request.FILES)
+            if form.is_valid():
+                assignment_file = request.FILES['assignment']
+                
+                # Create a directory for storing assignments if it doesn't exist
+                upload_dir = os.path.join(settings.MEDIA_ROOT, 'resources', 'student_assignments', year, semester, class_name)
+                os.makedirs(upload_dir, exist_ok=True)
+
+                # Save the file
+                file_path = os.path.join(upload_dir, assignment_file.name)
+                with open(file_path, 'wb+') as destination:
+                    for chunk in assignment_file.chunks():
+                        destination.write(chunk)
+
+                # Construct the URL path for the file
+                file_url = os.path.join(settings.MEDIA_URL, 'resources', 'student_assignments', year, semester, class_name, assignment_file.name)
+
+                # Store student information in MongoDB
+                upload_details = {
+                    "student_username": student.username,
+                    "teacher_username": teacher_username,  # Store the teacher's username
+                    "year": year,
+                    "semester": semester,
+                    "class_name": class_name,
+                    "file_name": assignment_file.name,
+                    "file_url": file_url,  # Store the file URL
+                    "uploaded_at": datetime.datetime.now().isoformat(),
+                }
+                db.assignments.insert_one(upload_details)
+
+                return redirect('student_dashboard')  # Redirect to the same page or another page
+
+        else:
+            form = UploadAssignmentForm()
     else:
         print("Student details not found in the database.")  # Debug print
         uploaded_pdfs = []
@@ -208,14 +263,56 @@ def student_dashboard(request):
         uploaded_assignments = []
 
     return render(request, 'student_dashboard.html', {
+        'form': form,
+        'teachers': tchr,
         'uploaded_pdfs': uploaded_pdfs,
         'uploaded_videos': uploaded_videos,
         'uploaded_assignments': uploaded_assignments,
     })
+def fetch_data_from_db():
+    # Fetch teachers data
+    teachers_collection = db.teacher
+    teachers = list(teachers_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1}))
 
+    # Fetch students data
+    students_collection = db.student
+    students = list(students_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1, "year": 1, "semester": 1, "class_name": 1}))
 
+    # Fetch activity logs
+    activity_logs_collection = db.uploads
+    activity_logs = list(activity_logs_collection.find({}, {"_id": 0, "teacher": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "uploaded_at": 1}))
+
+    # Fetch deleted logs
+    deleted_logs_collection = db.deleted
+    deletion_logs = list(deleted_logs_collection.find({}, {"_id": 0, "teacher": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "deleted_at": 1}))
+
+    return teachers, students, activity_logs, deletion_logs
 
 def teacher_dashboard(request):
+    assignment_collection = db.assignments
+    students_collection = db.student
+
+    # Initialize filter parameters
+    year = request.GET.get('year')
+    semester = request.GET.get('semester')
+    class_name = request.GET.get('class_name')
+
+    # Build the query for filtering students
+    query = {}
+    if year:
+        query['year'] = year
+    if semester:
+        query['semester'] = semester
+    if class_name:
+        query['class_name'] = class_name.upper().strip()  # Ensure class_name is formatted correctly
+
+    # Fetch students based on the query
+    stds = list(students_collection.find(query, {"_id": 0, "name": 1, "id_number": 1, "username": 1, "year": 1, "semester": 1, "class_name": 1}))
+    assg = list(assignment_collection.find({}, {"_id": 0, "student_username": 1, "teacher_username": 1, "year": 1, "semester": 1, "class_name": 1, "file_name": 1, "file_url": 1, "uploaded_at": 1}))
+
+    # Fetch student assignments
+    student_assignments = list(assignment_collection.find({"teacher_username": request.user.username}, {"_id": 0, "name": 1, "year": 1, "semester": 1, "class_name": 1, "file_name": 1, "file_url": 1, "uploaded_at": 1}))
+
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
@@ -230,15 +327,31 @@ def teacher_dashboard(request):
             # Format class_name
             class_name = ' '.join(class_name.upper().split())
 
+            # Save the file to the appropriate model and directory
+            upload_dir = os.path.join(settings.MEDIA_ROOT, 'resources', file_type, year, semester, class_name)
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            file_path = os.path.join(upload_dir, file.name)
+            with open(file_path, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
+
+            # Construct the URL path for the file relative to MEDIA_URL
+            file_url = os.path.join(settings.MEDIA_URL,'resources', file_type, year, semester, class_name, file.name)
+
+            # Debug print statements for file paths and URLs
+            print(f"file_path: {file_path}")
+            print(f"file_url: {file_url}")
+
             # Save the file to the appropriate model
             if file_type == 'pdf':
-                pdf_file = PDFFile(teacher=request.user, year=year, semester=semester, title=title, file=file, description=description, class_name=class_name)
+                pdf_file = PDFFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name)
                 pdf_file.save()
             elif file_type == 'video':
-                video_file = VideoFile(teacher=request.user, year=year, semester=semester, title=title, file=file, description=description, class_name=class_name)
+                video_file = VideoFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name)
                 video_file.save()
             elif file_type == 'assignment':
-                assignment_file = AssignmentFile(teacher=request.user, year=year, semester=semester, title=title, file=file, description=description, class_name=class_name)
+                assignment_file = AssignmentFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name)
                 assignment_file.save()
 
             # Log the activity
@@ -260,7 +373,7 @@ def teacher_dashboard(request):
                 "year": year,
                 "semester": semester,
                 "title": title,
-                "file_path": file.name,
+                "file_url": file_url,  # Use file_url
                 "description": description,
                 "class_name": class_name,
                 "uploaded_at": datetime.datetime.now().isoformat(),
@@ -271,14 +384,23 @@ def teacher_dashboard(request):
     else:
         form = UploadFileForm()
 
+    # Fetch uploaded files
     uploaded_pdfs = PDFFile.objects.filter(teacher=request.user)
     uploaded_videos = VideoFile.objects.filter(teacher=request.user)
     uploaded_assignments = AssignmentFile.objects.filter(teacher=request.user)
+
+    # Debug print statements for fetched assignments and URLs
+    for assignment in student_assignments:
+        print(f"Assignment URL: {assignment['file_url']}")
+
     return render(request, 'teacher_dashboard.html', {
         'form': form,
         'uploaded_pdfs': uploaded_pdfs,
         'uploaded_videos': uploaded_videos,
         'uploaded_assignments': uploaded_assignments,
+        'students': stds,
+        'assignment': assg,
+        'student_assignments': student_assignments  # Pass the student assignments to the template
     })
 
 def delete_file(request, file_type, pk):
@@ -288,6 +410,8 @@ def delete_file(request, file_type, pk):
         file = get_object_or_404(VideoFile, pk=pk, teacher=request.user)
     elif file_type == 'assignment':
         file = get_object_or_404(AssignmentFile, pk=pk, teacher=request.user)
+    elif file_type == 'student_assignment':
+        file = get_object_or_404(AssignmentFile, pk=pk)
     else:
         return redirect('teacher_dashboard')
 
@@ -295,7 +419,7 @@ def delete_file(request, file_type, pk):
         try:
             # Fetch the file path and other details before deletion
             file_path = file.file.name
-            teacher_username = request.user.username
+            teacher_username = request.user.username if file_type != 'student_assignment' else file.teacher.username
             year = file.year
             semester = file.semester
             title = file.title
@@ -343,35 +467,10 @@ def delete_file(request, file_type, pk):
         return redirect('teacher_dashboard')
 
     return redirect('teacher_dashboard')
-
+    
 def logout_view(request):
     logout(request)
     return redirect('index')
-
-from pymongo import MongoClient
-
-# Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client.academe
-
-def fetch_data_from_db():
-    # Fetch teachers data
-    teachers_collection = db.teacher
-    teachers = list(teachers_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1}))
-
-    # Fetch students data
-    students_collection = db.student
-    students = list(students_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1, "year": 1, "semester": 1, "class_name": 1}))
-
-    # Fetch activity logs
-    activity_logs_collection = db.uploads
-    activity_logs = list(activity_logs_collection.find({}, {"_id": 0, "teacher": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "uploaded_at": 1}))
-
-    # Fetch deleted logs
-    deleted_logs_collection = db.deleted
-    deletion_logs = list(deleted_logs_collection.find({}, {"_id": 0, "teacher": 1, "file_type": 1, "class_name": 1, "year": 1, "semester": 1, "title": 1, "description": 1, "deleted_at": 1}))
-
-    return teachers, students, activity_logs, deletion_logs
 
 def admin_dashboard(request):
     # Display teacher approval requests

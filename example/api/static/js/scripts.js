@@ -13,7 +13,7 @@ function resetForm() {
 }
 
 function showSection(section) {
-    var sections = ['upload-section', 'notes-section', 'lectures-section', 'assignments-section', 'requests-section', 'activity-section', 'deleted-section', 'teachers-section', 'students-section', 'filter_students-section'];
+    var sections = ['upload-section', 'notes-section', 'lectures-section', 'assignments-section', 'requests-section', 'activity-section', 'deleted-section', 'teachers-section', 'students-section', 'filter_students-section', 'student-assignments-section'];
 
     sections.forEach(function(id) {
         var element = document.getElementById(id);
@@ -23,6 +23,10 @@ function showSection(section) {
     });
 
     var selectedSection = document.getElementById(section + '-section');
+    if (!selectedSection && section === 'student_assignments') {
+        selectedSection = document.getElementById('student-assignments-section');
+    }
+
     if (selectedSection) {
         selectedSection.style.display = 'block';
     }

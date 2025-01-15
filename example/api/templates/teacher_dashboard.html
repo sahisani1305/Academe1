@@ -7,90 +7,101 @@
             <p>Welcome, {{ user.username }}!</p>
             <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
         </header>
-
-        <div class="upload-form">
-            <h2>Upload Notes, Lecture Videos, or Assignments</h2>
-            <form method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="file_type">File Type:</label>
-                    <select name="file_type" id="file_type">
-                        <option value="pdf">Lecture Notes</option>
-                        <option value="video">Lecture Video</option>
-                        <option value="assignment">Assignment</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="class_name">Class Name:</label>
-                    <input type="text" name="class_name" id="class_name" required>
-                </div>
-                <div class="form-group">
-                    <label for="year">Year:</label>
-                    <select name="year" id="year" required onchange="updateSemesters()">
-                        <option value="">Select Year</option>
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="semester">Semester:</label>
-                    <select name="semester" id="semester" required>
-                        <option value="">Select Semester</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="title">Title:</label>
-                    <input type="text" name="title" id="title" required>
-                </div>
-                <div class="form-group">
-                    <label for="description">Description:</label>
-                    <textarea name="description" id="description"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="file">File:</label>
-                    <input type="file" name="file" id="file" required>
-                </div>
-                <button type="submit">Upload</button>
-            </form>
-        </div>
-
-        <div class="uploaded-content">
-            <h2>Your Uploaded Notes</h2>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Class Name</th>
-                            <th>Year</th>
-                            <th>Semester</th>
-                            <th>Title</th>
-                            <th>Description</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for file in uploaded_pdfs %}
-                            <tr>
-                                <td>{{ file.class_name }}</td>
-                                <td>{{ file.year }}</td>
-                                <td>{{ file.semester }}</td>
-                                <td>{{ file.title }}</td>
-                                <td>{{ file.description }}</td>
-                                <td>
-                                    <a href="{{ file.file.url }}" target="_blank" class="btn btn-small">View PDF</a>
-                                    <form method="POST" action="{% url 'delete_file' 'pdf' file.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this PDF?');">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-small btn-danger">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <aside>
+            <button onclick="showSection('upload')">Upload</button>
+            <button onclick="showSection('notes')">Notes</button>
+            <button onclick="showSection('lectures')">Lectures</button>
+            <button onclick="showSection('assignments')">Assignment</button>
+            <button onclick="showSection('students')">Students</button>
+            <button onclick="showSection('student-assignments')">Student Assignments</button>
+        </aside>
+        <section id="upload-section" class="section-content" >
+            <div class="upload-form">
+                <h2>Upload Notes, Lecture Videos, or Assignments</h2>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="file_type">File Type:</label>
+                        <select name="file_type" id="file_type">
+                            <option value="pdf">Lecture Notes</option>
+                            <option value="video">Lecture Video</option>
+                            <option value="assignment">Assignment</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="class_name">Class Name:</label>
+                        <input type="text" name="class_name" id="class_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="year">Year:</label>
+                        <select name="year" id="upload-year" required onchange="updateSemesters('upload')">
+                            <option value="">Select Year</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="semester">Semester:</label>
+                        <select name="semester" id="upload-semester" required>
+                            <option value="">Select Semester</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="title">Title:</label>
+                        <input type="text" name="title" id="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea name="description" id="description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="file">File:</label>
+                        <input type="file" name="file" id="file" required>
+                    </div>
+                    <button type="submit">Upload</button>
+                </form>
             </div>
-
+        </section>
+        <section id="notes-section" class="section-content" style="display:none;">
+            <div class="uploaded-content">
+                <h2>Your Uploaded Notes</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Class Name</th>
+                                <th>Year</th>
+                                <th>Semester</th>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in uploaded_pdfs %}
+                                <tr>
+                                    <td>{{ file.class_name }}</td>
+                                    <td>{{ file.year }}</td>
+                                    <td>{{ file.semester }}</td>
+                                    <td>{{ file.title }}</td>
+                                    <td>{{ file.description }}</td>
+                                    <td>
+                                        <a href="{{ MEDIA_URL }}{{ file.file.url }}" target="_blank" class="btn btn-small">View Assignment</a>
+                                        <form method="POST" action="{% url 'delete_file' 'pdf' file.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this PDF?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <section id="lectures-section" class="section-content" style="display:none;">
             <h2>Your Uploaded Lecture Videos</h2>
             <div class="videos-container">
                 {% for video in uploaded_videos %}
@@ -113,7 +124,8 @@
                     </div>
                 {% endfor %}
             </div>
-
+        </section>
+        <section id="assignments-section" class="section-content" style="display:none;">
             <h2>Your Uploaded Assignments</h2>
             <div class="table-responsive">
                 <table>
@@ -136,7 +148,7 @@
                                 <td>{{ assignment.title }}</td>
                                 <td>{{ assignment.description }}</td>
                                 <td>
-                                    <a href="{{ assignment.file.url }}" target="_blank" class="btn btn-small">View Assignment</a>
+                                    <a href="{{ MEDIA_URL }}{{ assignment.file.url }}" target="_blank" class="btn btn-small">View Assignment</a>
                                     <form method="POST" action="{% url 'delete_file' 'assignment' assignment.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this assignment?');">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-small btn-danger">Delete</button>
@@ -147,6 +159,91 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-{% endblock %}
+        </section>
+        <section id="students-section" class="section-content" style="display:none;">
+            <h2>Students</h2>
+            <form method="GET" action="{% url 'teacher_dashboard' %}">
+                <div class="form-group">
+                    <label for="class_name">Class Name:</label>
+                    <input type="text" name="class_name" id="class_name">
+                </div>
+                <div class="form-group">
+                    <label for="year">Year:</label>
+                    <select name="year" id="students-year" required onchange="updateSemesters('students')">
+                        <option value="">Select Year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="semester">Semester:</label>
+                    <select name="semester" id="students-semester" required>
+                        <option value="">Select Semester</option>
+                    </select>
+                </div>
+                <button type="submit">Filter</button>
+            </form>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>ID Number</th>
+                            <th>Year</th>
+                            <th>Semester</th>
+                            <th>Class Name</th>
+                            <th>Username</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                            <tr>
+                                <td>{{ student.name }}</td>
+                                <td>{{ student.id_number }}</td>
+                                <td>{{ student.year }}</td>
+                                <td>{{ student.semester }}</td>
+                                <td>{{ student.class_name }}</td>
+                                <td>{{ student.username }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="student-assignments-section" class="section-content" style="display:none;">
+            <h2>Student Uploaded Assignments</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Year</th>
+                            <th>Semester</th>
+                            <th>Class Name</th>
+                            <th>File Name</th>
+                            <th>Uploaded At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in student_assignments %}
+                            <tr>
+                                <td>{{ assignment.name }}</td>
+                                <td>{{ assignment.year }}</td>
+                                <td>{{ assignment.semester }}</td>
+                                <td>{{ assignment.class_name }}</td>
+                                <td>{{ assignment.file_name }}</td>
+                                <td>{{ assignment.uploaded_at }}</td>
+                                <td>
+                                    <a href="{{ MEDIA_URL }}{{ assignment.file_url }}" target="_blank" class="btn btn-small">View Assignment</a>
+                                    <!-- Add any additional actions if needed -->
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endblock %}

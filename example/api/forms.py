@@ -20,3 +20,6 @@ class UploadFileForm(forms.Form):
         # Format class_name to uppercase with a single space between words
         formatted_class_name = ' '.join(class_name.upper().split())
         return formatted_class_name
+
+class UploadAssignmentForm(forms.Form):
+    assignment = forms.FileField(required=True)

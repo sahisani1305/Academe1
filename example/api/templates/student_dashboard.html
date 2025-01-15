@@ -12,6 +12,7 @@
             <button onclick="showSection('notes')">See Notes</button>
             <button onclick="showSection('lectures')">See Lectures</button>
             <button onclick="showSection('assignments')">See Assignments</button>
+            <button onclick="showSection('teachers')">Submit Assignment</button>
         </div>
 
         <div id="notes-section" class="section" style="display: none;">
@@ -108,5 +109,35 @@
                 </table>
             </div>
         </div>
+        <section id="teachers-section" class="section-content" style="display:none;">
+            <h2>Teachers</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>ID Number</th>
+                        <th>Username</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher in teachers %}
+                        <tr>
+                            <td>{{ teacher.name }}</td>
+                            <td>{{ teacher.id_number }}</td>
+                            <td>{{ teacher.username }}</td>
+                            <td>
+                                <form method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    {{ form.assignment.label }} {{ form.assignment }}
+                                    <input type="hidden" name="teacher_username" value="{{ teacher.username }}">
+                                    <input type="submit" value="Upload Assignment" class="btn btn-small">
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
     </div>
 {% endblock %}
