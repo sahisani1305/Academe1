@@ -415,3 +415,13 @@ def delete_student(request, username):
         except User.DoesNotExist:
             messages.error(request, f'Student {username} does not exist.')
         return redirect('admin_dashboard')
+
+def clear_activity_log(request):
+    if request.method == 'POST':
+        db.activity_log.delete_many({})
+        return redirect('admin_dashboard')
+
+def clear_deleted_log(request):
+    if request.method == 'POST':
+        db.deleted_log.delete_many({})
+        return redirect('admin_dashboard')

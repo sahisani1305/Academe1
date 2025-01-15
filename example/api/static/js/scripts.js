@@ -70,3 +70,26 @@ function toggleStudentFields() {
         document.getElementById('is_student').checked = false;
     }
 }
+
+
+function clearActivityLog() {
+    if (confirm('Are you sure you want to clear the activity log?')) {
+        fetch("{% url 'clear_activity_log' %}", { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+    }
+}
+
+function clearDeletedLog() {
+    if (confirm('Are you sure you want to clear the deleted log?')) {
+        fetch("{% url 'clear_deleted_log' %}", { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+    }
+}
