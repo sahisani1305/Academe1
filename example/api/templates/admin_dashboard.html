@@ -182,30 +182,61 @@
                 </table>
             </section>
 
-            <section id="blog-section" class="section-content" style="display:none;">
+            <section id="blog-section" class="section">
                 <h2>Blog</h2>
                 <form method="post">
                     {% csrf_token %}
                     <input type="text" name="post_title" placeholder="Title" required>
-                    <textarea name="post_content" placeholder="Write your announcement here..." required></textarea>
+                    <textarea name="post_content" placeholder="Write your doubt here..." required></textarea>
                     <button type="submit" class="btn btn-primary">Post</button>
                 </form>
+            
                 <div class="posts">
                     {% for post in posts %}
-                    <div class="post-box">
-                        <p class="post-author">Author: {{ post.author }}</p>
-                        <h3>{{ post.title }}</h3>
-                        <p class="post-content">{{ post.content|linebreaksbr }}</p>
-                        <p class="post-date"><strong>Posted on:</strong> {{ post.created_at|date:"Y-m-d H:i:s" }}</p>
-                        <form method="post" class="inline-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="like_post" value="{{ post.id }}">
-                            <button type="submit" class="btn btn-small" {% if user.username in post.liked_by %}disabled{% endif %}>Like ({{ post.likes }})</button>
-                        </form>
-                    </div>
+                        <div class="post-box" style="background-color: {% if post.is_superuser_post %}#ffcccb{% else %}white{% endif %};">
+                            <p class="post-author">Author: {{ post.author }}</p>
+                            <h3>{{ post.title }}</h3>
+                            <p class="post-content">{{ post.content|linebreaksbr }}</p>
+                            <p class="post-date"><strong>Posted on:</strong> {{ post.created_at|date:"Y-m-d H:i:s" }}</p>
+                            <form method="post" class="inline-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="like_post" value="{{ post.id }}">
+                                <button type="submit" class="btn btn-small" {% if user.username in post.liked_by %}disabled{% endif %}>Like ({{ post.likes }})</button>
+                            </form>
+                            {% if not post.is_superuser_post %}
+                                <button class="btn btn-small" onclick="toggleFollowUpForm('{{ post.id }}')">Follow Up</button>
+                            {% endif %}
+                            <div class="followups" id="followup-section-{{ post.id }}" style="display: none;">
+                                <div class="followup-container">
+                                    <h4>Follow-ups</h4>
+                                    {% for followup in post.followups %}
+                                        <div class="followup-box">
+                                            <p class="followup-content">{{ followup.content|linebreaksbr }}</p>
+                                            <p class="followup-author">Author: {{ followup.author }}</p>
+                                            <p class="followup-date">Posted on: {{ followup.created_at|date:"Y-m-d H:i:s" }}</p>
+                                            <form method="post" class="inline-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="post_id" value="{{ post.id }}">
+                                                <input type="hidden" name="like_followup" value="{{ forloop.counter0 }}">
+                                                <button type="submit" class="btn btn-small" {% if user.username in followup.liked_by %}disabled{% endif %}>Like ({{ followup.likes }})</button>
+                                            </form>
+                                        </div>
+                                    {% endfor %}
+                                    {% if not post.is_superuser_post %}
+                                        <form method="post" class="followup-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="post_id" value="{{ post.id }}">
+                                            <textarea name="followup_content" placeholder="Write your follow-up..." required></textarea>
+                                            <button type="submit" class="btn btn-small">Post Follow-up</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     {% endfor %}
                 </div>
             </section>
+            
         </div>
     </div>
 
@@ -242,5 +273,78 @@
             document.getElementById(`${sectionId}-section`).style.display = 'block';
         }
     </script>
+    <style>
+        .posts {
+            margin-top: 20px;
+        }
+        .post-box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .post-author {
+            font-size: 0.8em;
+            color: #777;
+        }
+        .post-content {
+            line-height: 1.2;
+        }
+        .inline-form {
+            display: inline;
+        }
+        .followup-container {
+            margin-top: 10px;
+            margin-left: 20px; /* Move the follow-up section to the right */
+            padding: 5px; /* Reduced padding */
+            border: 1px solid #007bff; /* Blue border for highlighting */
+            background-color: #f1f8ff; /* Light blue background for highlighting */
+            border-radius: 5px;
+        }
+        .followup-box {
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            padding: 5px; /* Reduced padding */
+            margin-top: 5px; /* Reduced margin */
+            border-radius: 4px;
+            font-size: 0.9em; /* Smaller font size */
+        }
+        .followup-content {
+            line-height: 1.2;
+        }
+        .followup-author, .followup-date {
+            font-size: 0.7em; /* Smaller font size */
+            color: #777;
+        }
+        .followup-form {
+            margin-top: 5px; /* Reduced margin */
+            font-size: 0.9em; /* Smaller font size */
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        /* Styles for admin announcement post box */
+        .post-box.admin-announcement {
+            background-color: #f8d7da; /* Red background for admin announcements */
+            border-color: #f5c6cb; /* Red border for admin announcements */
+        }
+        .admin-announcement .post-author,
+        .admin-announcement .post-content {
+            color: #721c24; /* Dark red color for text */
+        }
+    </style>        
 
 {% endblock %}

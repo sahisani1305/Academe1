@@ -246,7 +246,7 @@ def student_dashboard(request):
                         destination.write(chunk)
 
                 # Construct the URL path for the file
-                file_url = os.path.join('resources', 'student_assignments', year, semester, class_name, assignment_file.name)
+                file_url = os.path.join(settings.MEDIA_URL,'resources', 'student_assignments', year, semester, class_name, assignment_file.name)
 
                 # Store student information in MongoDB
                 upload_details = {
@@ -409,6 +409,7 @@ def teacher_dashboard(request):
         "posts":posts
     })
 
+
 def handle_blog_posts(request):
     user = request.user
 
@@ -425,7 +426,8 @@ def handle_blog_posts(request):
                 "created_at": datetime.now().isoformat(),
                 "likes": 0,
                 "liked_by": [],
-                "followups": []
+                "followups": [],
+                "is_superuser_post": user.is_superuser  # flag to identify superuser posts
             }
             db.posts.insert_one(new_post)
 
@@ -433,14 +435,18 @@ def handle_blog_posts(request):
         elif 'followup_content' in request.POST:
             post_id = request.POST.get('post_id')
             followup_content = request.POST.get('followup_content')
-            followup = {
-                "author": user.username,
-                "content": followup_content,
-                "created_at": datetime.now().isoformat(),
-                "likes": 0,
-                "liked_by": []
-            }
-            db.posts.update_one({"_id": ObjectId(post_id)}, {"$push": {"followups": followup}})
+            post = db.posts.find_one({"_id": ObjectId(post_id)})
+            
+            # Prevent follow-ups for superuser posts
+            if not post.get('is_superuser_post'):
+                followup = {
+                    "author": user.username,
+                    "content": followup_content,
+                    "created_at": datetime.now().isoformat(),
+                    "likes": 0,
+                    "liked_by": []
+                }
+                db.posts.update_one({"_id": ObjectId(post_id)}, {"$push": {"followups": followup}})
 
         # Handle likes for posts
         elif 'like_post' in request.POST:
@@ -448,6 +454,7 @@ def handle_blog_posts(request):
             post = db.posts.find_one({"_id": ObjectId(post_id)})
             if user.username not in post['liked_by']:
                 db.posts.update_one({"_id": ObjectId(post_id)}, {"$inc": {"likes": 1}, "$push": {"liked_by": user.username}})
+                
         # Handle likes for follow-ups
         elif 'like_followup' in request.POST:
             post_id = request.POST.get('post_id')
