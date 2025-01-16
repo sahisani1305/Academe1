@@ -23,3 +23,10 @@ class UploadFileForm(forms.Form):
 
 class UploadAssignmentForm(forms.Form):
     assignment = forms.FileField(required=True)
+
+class PostForm(forms.Form):
+    post_title = forms.CharField(max_length=100, label="Title")
+    post_content = forms.CharField(widget=forms.Textarea, label="Write your doubt here...")
+
+class FollowUpForm(forms.Form):
+    followup_content = forms.CharField(widget=forms.Textarea, label="Write your follow-up...")

@@ -7,13 +7,18 @@
             <a href="{% url 'logout' %}">Logout</a>
         </header>
 
+        <div class="action-buttons">
+            <button onclick="showSection('requests'); saveCurrentSection('requests')">Pending Requests</button>
+            <button onclick="showSection('activity'); saveCurrentSection('activity')">Activity Log</button>
+            <button onclick="showSection('deleted'); saveCurrentSection('deleted')">Deleted Log</button>
+            <button onclick="showSection('teachers'); saveCurrentSection('teachers')">Teachers</button>
+            <button onclick="showSection('students'); saveCurrentSection('students')">Students</button>
+            <button onclick="showSection('blog'); saveCurrentSection('blog')">Blog</button>
+        </div>
+
         <div>
             <aside>
-                <button onclick="showSection('requests')">Pending Requests</button>
-                <button onclick="showSection('activity')">Activity Log</button>
-                <button onclick="showSection('deleted')">Deleted Log</button>
-                <button onclick="showSection('teachers')">Teachers</button>
-                <button onclick="showSection('students')">Students</button>
+                <!-- Remove buttons from here as they are now in the action-buttons div -->
             </aside>
 
             <section id="requests-section" class="section-content">
@@ -176,6 +181,66 @@
                     </tbody>
                 </table>
             </section>
+
+            <section id="blog-section" class="section-content" style="display:none;">
+                <h2>Blog</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="text" name="post_title" placeholder="Title" required>
+                    <textarea name="post_content" placeholder="Write your announcement here..." required></textarea>
+                    <button type="submit" class="btn btn-primary">Post</button>
+                </form>
+                <div class="posts">
+                    {% for post in posts %}
+                    <div class="post-box">
+                        <p class="post-author">Author: {{ post.author }}</p>
+                        <h3>{{ post.title }}</h3>
+                        <p class="post-content">{{ post.content|linebreaksbr }}</p>
+                        <p class="post-date"><strong>Posted on:</strong> {{ post.created_at|date:"Y-m-d H:i:s" }}</p>
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="like_post" value="{{ post.id }}">
+                            <button type="submit" class="btn btn-small" {% if user.username in post.liked_by %}disabled{% endif %}>Like ({{ post.likes }})</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
         </div>
     </div>
+
+    <script>
+        function toggleFollowUpForm(postId) {
+            const followUpSection = document.getElementById(`followup-section-${postId}`);
+            if (followUpSection.style.display === "none") {
+                followUpSection.style.display = "block";
+            } else {
+                followUpSection.style.display = "none";
+            }
+        }
+
+        function saveCurrentSection(sectionId) {
+            localStorage.setItem('currentSection', sectionId);
+        }
+
+        function loadCurrentSection() {
+            const currentSection = localStorage.getItem('currentSection');
+            if (currentSection) {
+                showSection(currentSection);
+            } else {
+                showSection('requests'); // Default section
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCurrentSection);
+
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section-content');
+            sections.forEach(section => {
+                section.style.display = 'none';
+            });
+            document.getElementById(`${sectionId}-section`).style.display = 'block';
+        }
+    </script>
+
 {% endblock %}

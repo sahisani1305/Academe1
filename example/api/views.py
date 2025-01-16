@@ -164,16 +164,16 @@ def signup_view(request):
 
 def assign_student_role(user):
     # Assign the user a student role without staff status
-    student_group, created = Group.objects.get_or_create(name='student')
+    student_group, _ = Group.objects.get_or_create(name='student')
     user.groups.add(student_group)
     user.is_staff = False
     user.save()
 
 
-def approve_teacher(request, pk):
+def approve_teacher(_, pk):
     approval_request = TeacherApprovalRequest.objects.get(pk=pk)
     user = approval_request.user
-    teacher_group, created = Group.objects.get_or_create(name='teacher')
+    teacher_group, _ = Group.objects.get_or_create(name='teacher')
     user.groups.add(teacher_group)
     user.is_staff = True
     user.save()
@@ -181,7 +181,7 @@ def approve_teacher(request, pk):
     approval_request.save()
     return redirect('admin_dashboard')
 
-def reject_teacher(request, pk):
+def reject_teacher(_, pk):
     approval_request = TeacherApprovalRequest.objects.get(pk=pk)
     user = approval_request.user
     assign_student_role(user)
@@ -190,6 +190,14 @@ def reject_teacher(request, pk):
 
 from .forms import UploadAssignmentForm
 
+
+from bson import ObjectId
+from datetime import datetime
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+import os
+
+@login_required
 def student_dashboard(request):
     teachers_collection = db.teacher
     tchr = list(teachers_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1}))
@@ -204,8 +212,9 @@ def student_dashboard(request):
         year = student_details.get("year")
         semester = student_details.get("semester")
         class_name = student_details.get("class_name")
+        student_name = student_details.get("name")  # Get the student's name
         
-        print(f"Student Details: Year - {year}, Semester - {semester}, Class Name - {class_name}")  # Debug print
+        print(f"Student Details: Year - {year}, Semester - {semester}, Class Name - {class_name}, Name - {student_name}")  # Debug print
 
         # Format class_name to match the formatting used during upload
         class_name = ' '.join(class_name.upper().split())
@@ -237,19 +246,20 @@ def student_dashboard(request):
                         destination.write(chunk)
 
                 # Construct the URL path for the file
-                file_url = os.path.join(settings.MEDIA_URL, 'resources', 'student_assignments', year, semester, class_name, assignment_file.name)
+                file_url = os.path.join('resources', 'student_assignments', year, semester, class_name, assignment_file.name)
 
                 # Store student information in MongoDB
                 upload_details = {
                     "student_username": student.username,
+                    "student_name": student_name,  # Add the student's name
                     "teacher_username": teacher_username,  # Store the teacher's username
                     "year": year,
                     "semester": semester,
                     "class_name": class_name,
                     "file_name": assignment_file.name,
                     "file_url": file_url,  # Store the file URL
-                    "uploaded_at": datetime.datetime.now().isoformat(),
-                }
+                    "uploaded_at": datetime.now().isoformat(),
+                    }
                 db.assignments.insert_one(upload_details)
 
                 return redirect('student_dashboard')  # Redirect to the same page or another page
@@ -261,6 +271,8 @@ def student_dashboard(request):
         uploaded_pdfs = []
         uploaded_videos = []
         uploaded_assignments = []
+    
+    posts = handle_blog_posts(request)
 
     return render(request, 'student_dashboard.html', {
         'form': form,
@@ -268,7 +280,9 @@ def student_dashboard(request):
         'uploaded_pdfs': uploaded_pdfs,
         'uploaded_videos': uploaded_videos,
         'uploaded_assignments': uploaded_assignments,
+        'posts':posts
     })
+
 def fetch_data_from_db():
     # Fetch teachers data
     teachers_collection = db.teacher
@@ -288,6 +302,13 @@ def fetch_data_from_db():
 
     return teachers, students, activity_logs, deletion_logs
 
+from bson import ObjectId
+from datetime import datetime
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+import os
+
+@login_required
 def teacher_dashboard(request):
     assignment_collection = db.assignments
     students_collection = db.student
@@ -304,14 +325,14 @@ def teacher_dashboard(request):
     if semester:
         query['semester'] = semester
     if class_name:
-        query['class_name'] = class_name.upper().strip()  # Ensure class_name is formatted correctly
+        query['class_name'] = class_name.upper().strip()
 
     # Fetch students based on the query
     stds = list(students_collection.find(query, {"_id": 0, "name": 1, "id_number": 1, "username": 1, "year": 1, "semester": 1, "class_name": 1}))
-    assg = list(assignment_collection.find({}, {"_id": 0, "student_username": 1, "teacher_username": 1, "year": 1, "semester": 1, "class_name": 1, "file_name": 1, "file_url": 1, "uploaded_at": 1}))
+    assg = list(assignment_collection.find({"teacher_username": request.user.username}, {"_id": 0, "student_username": 1, "teacher_username": 1, "year": 1, "semester": 1, "class_name": 1, "file_name": 1, "file_url": 1, "uploaded_at": 1}))
+    student_assignments = list(assignment_collection.find({"teacher_username": request.user.username}, {"_id": 0, "student_name": 1, "year": 1, "semester": 1, "class_name": 1, "file_name": 1, "file_url": 1, "uploaded_at": 1}))
 
-    # Fetch student assignments
-    student_assignments = list(assignment_collection.find({"teacher_username": request.user.username}, {"_id": 0, "name": 1, "year": 1, "semester": 1, "class_name": 1, "file_name": 1, "file_url": 1, "uploaded_at": 1}))
+    form = UploadFileForm()
 
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -322,10 +343,7 @@ def teacher_dashboard(request):
             title = form.cleaned_data['title']
             file = form.cleaned_data['file']
             description = form.cleaned_data['description']
-            class_name = form.cleaned_data['class_name']
-
-            # Format class_name
-            class_name = ' '.join(class_name.upper().split())
+            class_name = ' '.join(form.cleaned_data['class_name'].upper().split())
 
             # Save the file to the appropriate model and directory
             upload_dir = os.path.join(settings.MEDIA_ROOT, 'resources', file_type, year, semester, class_name)
@@ -336,25 +354,16 @@ def teacher_dashboard(request):
                 for chunk in file.chunks():
                     destination.write(chunk)
 
-            # Construct the URL path for the file relative to MEDIA_URL
-            file_url = os.path.join(settings.MEDIA_URL,'resources', file_type, year, semester, class_name, file.name)
-
-            # Debug print statements for file paths and URLs
-            print(f"file_path: {file_path}")
-            print(f"file_url: {file_url}")
+            file_url = os.path.join(settings.MEDIA_URL, 'resources', file_type, year, semester, class_name, file.name)
 
             # Save the file to the appropriate model
             if file_type == 'pdf':
-                pdf_file = PDFFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name)
-                pdf_file.save()
+                PDFFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name).save()
             elif file_type == 'video':
-                video_file = VideoFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name)
-                video_file.save()
+                VideoFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name).save()
             elif file_type == 'assignment':
-                assignment_file = AssignmentFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name)
-                assignment_file.save()
+                AssignmentFile(teacher=request.user, year=year, semester=semester, title=title, file=file_path, description=description, class_name=class_name).save()
 
-            # Log the activity
             ActivityLog.objects.create(
                 teacher=request.user,
                 action='Uploaded file',
@@ -366,32 +375,28 @@ def teacher_dashboard(request):
                 description=description
             )
 
-            # Store details in MongoDB
             upload_details = {
                 "teacher": request.user.username,
                 "file_type": file_type,
                 "year": year,
                 "semester": semester,
                 "title": title,
-                "file_url": file_url,  # Use file_url
+                "file_url": file_url,
                 "description": description,
                 "class_name": class_name,
-                "uploaded_at": datetime.datetime.now().isoformat(),
+                "uploaded_at": datetime.now().isoformat(),
             }
             db.uploads.insert_one(upload_details)
 
             return redirect('teacher_dashboard')
-    else:
-        form = UploadFileForm()
+        else:
+            print("Form errors:", form.errors)
 
-    # Fetch uploaded files
     uploaded_pdfs = PDFFile.objects.filter(teacher=request.user)
     uploaded_videos = VideoFile.objects.filter(teacher=request.user)
     uploaded_assignments = AssignmentFile.objects.filter(teacher=request.user)
 
-    # Debug print statements for fetched assignments and URLs
-    for assignment in student_assignments:
-        print(f"Assignment URL: {assignment['file_url']}")
+    posts = handle_blog_posts(request)
 
     return render(request, 'teacher_dashboard.html', {
         'form': form,
@@ -400,8 +405,73 @@ def teacher_dashboard(request):
         'uploaded_assignments': uploaded_assignments,
         'students': stds,
         'assignment': assg,
-        'student_assignments': student_assignments  # Pass the student assignments to the template
+        'student_assignments': student_assignments,
+        "posts":posts
     })
+
+def handle_blog_posts(request):
+    user = request.user
+
+    if request.method == 'POST':
+        # Handle blog post creation
+        if 'post_title' in request.POST:
+            post_title = request.POST.get('post_title')
+            post_content = request.POST.get('post_content')
+            author_name = "Admin Announcement" if user.is_superuser else user.username
+            new_post = {
+                "author": author_name,
+                "title": post_title,
+                "content": post_content,
+                "created_at": datetime.now().isoformat(),
+                "likes": 0,
+                "liked_by": [],
+                "followups": []
+            }
+            db.posts.insert_one(new_post)
+
+        # Handle follow-up creation
+        elif 'followup_content' in request.POST:
+            post_id = request.POST.get('post_id')
+            followup_content = request.POST.get('followup_content')
+            followup = {
+                "author": user.username,
+                "content": followup_content,
+                "created_at": datetime.now().isoformat(),
+                "likes": 0,
+                "liked_by": []
+            }
+            db.posts.update_one({"_id": ObjectId(post_id)}, {"$push": {"followups": followup}})
+
+        # Handle likes for posts
+        elif 'like_post' in request.POST:
+            post_id = request.POST.get('like_post')
+            post = db.posts.find_one({"_id": ObjectId(post_id)})
+            if user.username not in post['liked_by']:
+                db.posts.update_one({"_id": ObjectId(post_id)}, {"$inc": {"likes": 1}, "$push": {"liked_by": user.username}})
+        # Handle likes for follow-ups
+        elif 'like_followup' in request.POST:
+            post_id = request.POST.get('post_id')
+            followup_index = int(request.POST.get('like_followup'))
+            followup_path = f"followups.{followup_index}.likes"
+            liked_by_path = f"followups.{followup_index}.liked_by"
+            post = db.posts.find_one({"_id": ObjectId(post_id)})
+            if user.username not in post['followups'][followup_index]['liked_by']:
+                db.posts.update_one({"_id": ObjectId(post_id)}, {"$inc": {followup_path: 1}, "$push": {liked_by_path: user.username}})
+
+    posts = list(db.posts.find().sort("created_at", -1))
+
+    # Convert ObjectId to string and rename _id to id for the template
+    for post in posts:
+        post['id'] = str(post['_id'])
+        post['created_at'] = datetime.fromisoformat(post['created_at'])
+        del post['_id']
+        for followup in post['followups']:
+            followup['id'] = str(followup.get('_id', ''))
+            followup['created_at'] = datetime.fromisoformat(followup['created_at'])
+            if '_id' in followup:
+                del followup['_id']
+
+    return posts
 
 def delete_file(request, file_type, pk):
     if file_type == 'pdf':
@@ -441,7 +511,7 @@ def delete_file(request, file_type, pk):
                 "description": description,
                 "class_name": class_name,
                 "uploaded_at": uploaded_at,
-                "deleted_at": datetime.datetime.now().isoformat()
+                "deleted_at": datetime.now().isoformat()
             }
             db.deleted.insert_one(deleted_details)
             
@@ -461,7 +531,7 @@ def delete_file(request, file_type, pk):
             file.delete()
             
         except Exception as e:
-            messages.error(request, "Could not delete the file. Please try again later.")
+            messages.error(request, f"Could not delete the file. Error: {e}")
             return redirect('teacher_dashboard')
 
         return redirect('teacher_dashboard')
@@ -479,12 +549,15 @@ def admin_dashboard(request):
     # Fetch lists of teachers and students using pymongo
     teachers, students, activity_logs, deletion_logs = fetch_data_from_db()
 
+    posts = handle_blog_posts(request)
+
     return render(request, 'admin_dashboard.html', {
         'teacher_requests': teacher_requests,
         'activity_logs': activity_logs,
         'deletion_logs': deletion_logs,
         'teachers': teachers,
         'students': students,
+        'posts':posts
     })
 
 def delete_teacher(request, username):

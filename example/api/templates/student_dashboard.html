@@ -9,10 +9,11 @@
         </header>
 
         <div class="action-buttons">
-            <button onclick="showSection('notes')">See Notes</button>
-            <button onclick="showSection('lectures')">See Lectures</button>
-            <button onclick="showSection('assignments')">See Assignments</button>
-            <button onclick="showSection('teachers')">Submit Assignment</button>
+            <button onclick="showSection('notes'); saveCurrentSection('notes')">See Notes</button>
+            <button onclick="showSection('lectures'); saveCurrentSection('lectures')">See Lectures</button>
+            <button onclick="showSection('assignments'); saveCurrentSection('assignments')">See Assignments</button>
+            <button onclick="showSection('teachers'); saveCurrentSection('teachers')">Submit Assignment</button>
+            <button onclick="showSection('blog'); saveCurrentSection('blog')">Blog</button>
         </div>
 
         <div id="notes-section" class="section" style="display: none;">
@@ -131,7 +132,7 @@
                                     {% csrf_token %}
                                     {{ form.assignment.label }} {{ form.assignment }}
                                     <input type="hidden" name="teacher_username" value="{{ teacher.username }}">
-                                    <input type="submit" value="Upload Assignment" class="btn btn-small">
+                                    <input type="submit" value="Upload Assignment" class="btn btn-small" onclick="saveCurrentSection('teachers')">
                                 </form>
                             </td>
                         </tr>
@@ -139,5 +140,81 @@
                 </tbody>
             </table>
         </section>
+        <section id="blog-section" class="section">
+            <h2>Blog</h2>
+            <form method="post">
+                {% csrf_token %}
+                <input type="text" name="post_title" placeholder="Title" required>
+                <textarea name="post_content" placeholder="Write your doubt here..." required></textarea>
+                <button type="submit" class="btn btn-primary">Post</button>
+            </form>
+        
+            <div class="posts">
+                {% for post in posts %}
+                    <div class="post-box">
+                        <p class="post-author">Author: {{ post.author }}</p>
+                        <h3>{{ post.title }}</h3>
+                        <p class="post-content">{{ post.content|linebreaksbr }}</p>
+                        <p class="post-date"><strong>Posted on:</strong> {{ post.created_at|date:"Y-m-d H:i:s" }}</p>
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="like_post" value="{{ post.id }}">
+                            <button type="submit" class="btn btn-small" {% if user.username in post.liked_by %}disabled{% endif %}>Like ({{ post.likes }})</button>
+                        </form>
+                        <button class="btn btn-small" onclick="toggleFollowUpForm('{{ post.id }}')">Follow Up</button>
+                        <div class="followups" id="followup-section-{{ post.id }}" style="display: none;">
+                            <div class="followup-container">
+                                <h4>Follow-ups</h4>
+                                {% for followup in post.followups %}
+                                    <div class="followup-box">
+                                        <p class="followup-content">{{ followup.content|linebreaksbr }}</p>
+                                        <p class="followup-author">Author: {{ followup.author }}</p>
+                                        <p class="followup-date">Posted on: {{ followup.created_at|date:"Y-m-d H:i:s" }}</p>
+                                        <form method="post" class="inline-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="post_id" value="{{ post.id }}">
+                                            <input type="hidden" name="like_followup" value="{{ forloop.counter0 }}">
+                                            <button type="submit" class="btn btn-small" {% if user.username in followup.liked_by %}disabled{% endif %}>Like ({{ followup.likes }})</button>
+                                        </form>
+                                    </div>
+                                {% endfor %}
+                                <form method="post" class="followup-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="post_id" value="{{ post.id }}">
+                                    <textarea name="followup_content" placeholder="Write your follow-up..." required></textarea>
+                                    <button type="submit" class="btn btn-small">Post Follow-up</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        
+        <script>
+            function toggleFollowUpForm(postId) {
+                const followUpSection = document.getElementById(`followup-section-${postId}`);
+                if (followUpSection.style.display === "none") {
+                    followUpSection.style.display = "block";
+                } else {
+                    followUpSection.style.display = "none";
+                }
+            }
+
+            function saveCurrentSection(sectionId) {
+                localStorage.setItem('currentSection', sectionId);
+            }
+
+            function loadCurrentSection() {
+                const currentSection = localStorage.getItem('currentSection');
+                if (currentSection) {
+                    showSection(currentSection);
+                } else {
+                    showSection('notes'); // Default section
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', loadCurrentSection);
+        </script>
     </div>
 {% endblock %}

@@ -27,6 +27,53 @@ h1, h2 {
     color: var(--primary-color);
     margin-bottom: 20px;
 }
+.posts {
+    margin-top: 20px;
+}
+.post-box {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+.post-author {
+    font-size: 0.8em;
+    color: #777;
+}
+.post-content {
+    line-height: 1.2;
+}
+.inline-form {
+    display: inline;
+}
+.followup-container {
+    margin-top: 10px;
+    margin-left: 20px; /* Move the follow-up section to the right */
+    padding: 5px; /* Reduced padding */
+    border: 1px solid #007bff; /* Blue border for highlighting */
+    background-color: #f1f8ff; /* Light blue background for highlighting */
+    border-radius: 5px;
+}
+.followup-box {
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    padding: 5px; /* Reduced padding */
+    margin-top: 5px; /* Reduced margin */
+    border-radius: 4px;
+    font-size: 0.9em; /* Smaller font size */
+}
+.followup-content {
+    line-height: 1.2;
+}
+.followup-author, .followup-date {
+    font-size: 0.7em; /* Smaller font size */
+    color: #777;
+}
+.followup-form {
+    margin-top: 5px; /* Reduced margin */
+    font-size: 0.9em; /* Smaller font size */
+}
 
 .btn {
     display: inline-block;
@@ -40,6 +87,16 @@ h1, h2 {
     cursor: pointer;
     font-size: 16px;
     text-align: center;
+}
+
+/* Styles for admin announcement post box */
+.post-box.admin-announcement {
+    background-color: #f8d7da; /* Red background for admin announcements */
+    border-color: #f5c6cb; /* Red border for admin announcements */
+}
+.admin-announcement .post-author,
+.admin-announcement .post-content {
+    color: #721c24; /* Dark red color for text */
 }
 
 .btn:hover {
@@ -338,4 +395,33 @@ textarea {
     .form-actions .btn {
         margin: 5px 0;
     }
+}
+.post-box {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+.post-author {
+    font-size: 0.8em;
+    color: #777;
+}
+.post-content {
+    line-height: 1.2;
+}
+.inline-form {
+    display: inline;
+}
+.followup-box {
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+.followup-author, .followup-date {
+    font-size: 0.8em;
+    color: #777;
+}
+.followup-form {
+    margin-top: 10px;
 }

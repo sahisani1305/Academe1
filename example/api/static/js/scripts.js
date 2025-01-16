@@ -6,30 +6,20 @@ document.addEventListener('DOMContentLoaded', function() {
             alert("Your request for teacher ID will be sent to admin for approval.");
         });
     }
+
+    loadCurrentSection();
 });
 
 function resetForm() {
     document.getElementById('signup-form').reset();
 }
 
-function showSection(section) {
-    var sections = ['upload-section', 'notes-section', 'lectures-section', 'assignments-section', 'requests-section', 'activity-section', 'deleted-section', 'teachers-section', 'students-section', 'filter_students-section', 'student-assignments-section'];
-
-    sections.forEach(function(id) {
-        var element = document.getElementById(id);
-        if (element) {
-            element.style.display = 'none';
-        }
+function showSection(sectionId) {
+    const sections = document.querySelectorAll('.section, .section-content');
+    sections.forEach(section => {
+        section.style.display = 'none';
     });
-
-    var selectedSection = document.getElementById(section + '-section');
-    if (!selectedSection && section === 'student_assignments') {
-        selectedSection = document.getElementById('student-assignments-section');
-    }
-
-    if (selectedSection) {
-        selectedSection.style.display = 'block';
-    }
+    document.getElementById(`${sectionId}-section`).style.display = 'block';
 }
 
 function updateSemesters(section) {
@@ -72,5 +62,27 @@ function toggleStudentFields() {
 
     if (isTeacherChecked) {
         document.getElementById('is_student').checked = false;
+    }
+}
+
+function toggleFollowUpForm(postId) {
+    const followUpSection = document.getElementById(`followup-section-${postId}`);
+    if (followUpSection.style.display === "none") {
+        followUpSection.style.display = "block";
+    } else {
+        followUpSection.style.display = "none";
+    }
+}
+
+function saveCurrentSection(sectionId) {
+    localStorage.setItem('currentSection', sectionId);
+}
+
+function loadCurrentSection() {
+    const currentSection = localStorage.getItem('currentSection');
+    if (currentSection) {
+        showSection(currentSection);
+    } else {
+        showSection('notes'); // Default section
     }
 }
