@@ -410,6 +410,8 @@ def teacher_dashboard(request):
     })
 
 
+from datetime import datetime, timedelta
+
 def handle_blog_posts(request):
     user = request.user
 
@@ -419,24 +421,35 @@ def handle_blog_posts(request):
             post_title = request.POST.get('post_title')
             post_content = request.POST.get('post_content')
             author_name = "Admin Announcement" if user.is_superuser else user.username
-            new_post = {
+
+            # Check for duplicate post content within the last 6 hours
+            six_hours_ago = datetime.now() - timedelta(hours=6)
+            existing_post = db.posts.find_one({
                 "author": author_name,
                 "title": post_title,
                 "content": post_content,
-                "created_at": datetime.now().isoformat(),
-                "likes": 0,
-                "liked_by": [],
-                "followups": [],
-                "is_superuser_post": user.is_superuser  # flag to identify superuser posts
-            }
-            db.posts.insert_one(new_post)
+                "created_at": {"$gte": six_hours_ago.isoformat()}
+            })
+
+            if not existing_post:
+                new_post = {
+                    "author": author_name,
+                    "title": post_title,
+                    "content": post_content,
+                    "created_at": datetime.now().isoformat(),
+                    "likes": 0,
+                    "liked_by": [],
+                    "followups": [],
+                    "is_superuser_post": user.is_superuser  # flag to identify superuser posts
+                }
+                db.posts.insert_one(new_post)
 
         # Handle follow-up creation
         elif 'followup_content' in request.POST:
             post_id = request.POST.get('post_id')
             followup_content = request.POST.get('followup_content')
             post = db.posts.find_one({"_id": ObjectId(post_id)})
-            
+
             # Prevent follow-ups for superuser posts
             if not post.get('is_superuser_post'):
                 followup = {
