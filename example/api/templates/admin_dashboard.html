@@ -1,20 +1,238 @@
-{% extends 'base.html' %}
-{% block content %}
-    <div>
+{%load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal overflow */
+        }
+
+        .dashboard-container {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1, h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .posts {
+            margin-top: 20px;
+        }
+
+        .post-box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-author {
+            font-size: 0.8em;
+            color: #777;
+        }
+
+        .post-content {
+            line-height: 1.2;
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
+        .followup-container {
+            margin-top: 10px;
+            margin-left: 20px;
+            padding: 5px;
+            border: 1px solid #007bff;
+            background-color: #f1f8ff;
+            border-radius: 5px;
+        }
+
+        .followup-box {
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            padding: 5px;
+            margin-top: 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .followup-content {
+            line-height: 1.2;
+        }
+
+        .followup-author, .followup-date {
+            font-size: 0.7em;
+            color: #777;
+        }
+
+        .followup-form {
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        .post-box.admin-announcement {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .admin-announcement .post-author,
+        .admin-announcement .post-content {
+            color: #721c24;
+        }
+        @media (max-width: 768px) {
+            .action-buttons {
+            flex-direction: column;
+            }
+
+            .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            }
+
+            .btn.btn-secondary {
+            width: auto; /* Adjust the width of the logout button */
+            }
+
+            .videos-container {
+            grid-template-columns: 1fr;
+            }
+
+            .table-responsive {
+            overflow-x: scroll;
+            }
+
+            #teachers-section {
+            overflow-x: auto; /* Add scroll feature to the "Submit Assignment" section */
+            }
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px; /* Reduce font size */
+        }
+        }
+        .btn-danger {
+            background-color: #dc3545; /* Red color */
+            color: white; /* White text */
+            border: none; /* Remove border */
+            padding: 5px 10px; /* Add padding for a larger button */
+            border-radius: 4px; /* Slightly rounded corners */
+            font-size: 18px; /* Increase font size */
+            line-height: 1; /* Adjust line height */
+            cursor: pointer; /* Change cursor to pointer */
+            transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333; /* Darker red on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
         <header>
             <h1>Admin Dashboard</h1>
-            <p>Welcome, {{ user.username }}!</p>
-            <a href="{% url 'logout' %}">Logout</a>
+            <p>Welcome, Admin!</p>
+            <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
         </header>
-
-        <div class="action-buttons">
-            <button onclick="showSection('requests'); saveCurrentSection('requests')">Pending Requests</button>
-            <button onclick="showSection('activity'); saveCurrentSection('activity')">Activity Log</button>
-            <button onclick="showSection('deleted'); saveCurrentSection('deleted')">Deleted Log</button>
-            <button onclick="showSection('teachers'); saveCurrentSection('teachers')">Teachers</button>
-            <button onclick="showSection('students'); saveCurrentSection('students')">Students</button>
-            <button onclick="showSection('blog'); saveCurrentSection('blog')">Blog</button>
+        <div class="container">
+            {% if messages %}
+                <ul class="message-list">
+                    {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
+        <aside class="action-buttons">
+            <button class="btn" onclick="showSection('requests'); saveCurrentSection('requests')">Pending Requests</button>
+            <button class="btn" onclick="showSection('activity'); saveCurrentSection('activity')">Activity Log</button>
+            <button class="btn" onclick="showSection('deleted'); saveCurrentSection('deleted')">Deleted Log</button>
+            <button class="btn" onclick="showSection('teachers'); saveCurrentSection('teachers')">Teachers</button>
+            <button class="btn" onclick="showSection('students'); saveCurrentSection('students')">Students</button>
+            <button class="btn" onclick="showSection('blog'); saveCurrentSection('blog')">Blog</button>
+        </aside>
 
         <div>
             <aside>
@@ -23,6 +241,7 @@
 
             <section id="requests-section" class="section-content">
                 <h2>Pending Teacher Requests</h2>
+                <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -44,6 +263,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </section>
 
             <section id="activity-section" class="section-content" style="display:none;">
@@ -52,6 +272,7 @@
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">Clear Activity Log</button>
                 </form>
+                <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -80,6 +301,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
             </section>
 
             <section id="deleted-section" class="section-content" style="display:none;">
@@ -88,6 +310,7 @@
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">Clear Deleted Log</button>
                 </form>
+                <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -116,10 +339,12 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
             </section>
 
             <section id="teachers-section" class="section-content" style="display:none;">
                 <h2>Teachers</h2>
+                <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -145,10 +370,12 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
             </section>
 
             <section id="students-section" class="section-content" style="display:none;">
                 <h2>Students</h2>
+                <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
@@ -180,6 +407,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
             </section>
 
             <section id="blog-section" class="section">
@@ -234,12 +462,12 @@
                             </div>
                         </div>
                     {% endfor %}
-                </div>
+                    </div>
             </section>
             
         </div>
     </div>
-
+    <script src="{% static 'js/scripts.js' %}"></script>
     <script>
         function toggleFollowUpForm(postId) {
             const followUpSection = document.getElementById(`followup-section-${postId}`);
@@ -259,92 +487,11 @@
             if (currentSection) {
                 showSection(currentSection);
             } else {
-                showSection('requests'); // Default section
+                showSection('notes'); // Default section
             }
         }
 
         document.addEventListener('DOMContentLoaded', loadCurrentSection);
-
-        function showSection(sectionId) {
-            const sections = document.querySelectorAll('.section-content');
-            sections.forEach(section => {
-                section.style.display = 'none';
-            });
-            document.getElementById(`${sectionId}-section`).style.display = 'block';
-        }
     </script>
-    <style>
-        .posts {
-            margin-top: 20px;
-        }
-        .post-box {
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .post-author {
-            font-size: 0.8em;
-            color: #777;
-        }
-        .post-content {
-            line-height: 1.2;
-        }
-        .inline-form {
-            display: inline;
-        }
-        .followup-container {
-            margin-top: 10px;
-            margin-left: 20px; /* Move the follow-up section to the right */
-            padding: 5px; /* Reduced padding */
-            border: 1px solid #007bff; /* Blue border for highlighting */
-            background-color: #f1f8ff; /* Light blue background for highlighting */
-            border-radius: 5px;
-        }
-        .followup-box {
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
-            padding: 5px; /* Reduced padding */
-            margin-top: 5px; /* Reduced margin */
-            border-radius: 4px;
-            font-size: 0.9em; /* Smaller font size */
-        }
-        .followup-content {
-            line-height: 1.2;
-        }
-        .followup-author, .followup-date {
-            font-size: 0.7em; /* Smaller font size */
-            color: #777;
-        }
-        .followup-form {
-            margin-top: 5px; /* Reduced margin */
-            font-size: 0.9em; /* Smaller font size */
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: var(--primary-color);
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            text-align: center;
-        }
-        
-        /* Styles for admin announcement post box */
-        .post-box.admin-announcement {
-            background-color: #f8d7da; /* Red background for admin announcements */
-            border-color: #f5c6cb; /* Red border for admin announcements */
-        }
-        .admin-announcement .post-author,
-        .admin-announcement .post-content {
-            color: #721c24; /* Dark red color for text */
-        }
-    </style>        
-
-{% endblock %}
+</body>
+</html>

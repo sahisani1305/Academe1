@@ -1,61 +1,198 @@
-{% extends 'base.html' %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --secondary-color: #6c757d;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
 
-{% block content %}
-<div class="signup-page">
-    <div class="form-container signup-form">
-        <h1>Signup</h1>
-        <form method="POST" action="{% url 'signup' %}" id="signup-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <input type="text" name="name" placeholder="Name" required>
-            </div>
-            <div class="form-group">
-                <input type="text" name="id_number" placeholder="ID Number" required>
-            </div>
-            <div class="form-group">
-                <input type="text" name="username" placeholder="Username (8+ chars, alphanumeric & special char)" required>
-            </div>
-            <div class="form-group">
-                <input type="password" name="password" placeholder="Password" required>
-            </div>
-            <div class="form-group checkbox-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" name="is_teacher" id="is_teacher" onchange="toggleStudentFields()">
-                    <span>Apply as Teacher</span>
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" name="is_student" id="is_student" onchange="toggleStudentFields()">
-                    <span>Apply as Student</span>
-                </label>
-            </div>
-            <div id="student-fields" style="display: none;">
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .signup-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 40px;
+            padding: 0 20px;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .signup-form h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .signup-form input[type="text"],
+        .signup-form input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .message-list {
+            list-style-type: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .message-list li {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .message-list li.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .message-list li.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .form-container {
+                width: 90%;
+                margin: 20px auto;
+            }
+
+            .btn-small {
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-page">
+        <div class="form-container signup-form">
+            <h1>Signup</h1>
+            <form method="POST" action="/signup/" id="signup-form">
+                <input type="hidden" name="csrfmiddlewaretoken" value="YOUR_CSRF_TOKEN_HERE">
                 <div class="form-group">
-                    <label for="year">Year:</label>
-                    <select name="year" id="year" required onchange="updateSemesters()">
-                        <option value="">Select Year</option>
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
-                    </select>
+                    <input type="text" name="name" placeholder="Name" required>
                 </div>
                 <div class="form-group">
-                    <label for="semester">Semester:</label>
-                    <select name="semester" id="semester" required>
-                        <option value="">Select Semester</option>
-                    </select>
+                    <input type="text" name="id_number" placeholder="ID Number" required>
                 </div>
                 <div class="form-group">
-                    <input type="text" name="class_name" placeholder="Class Name" required>
+                    <input type="text" name="username" placeholder="Username (8+ chars, alphanumeric & special char)" required>
                 </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Signup</button>
-        </form>
+                <div class="form-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="is_teacher" id="is_teacher" onchange="toggleStudentFields()">
+                        <span>Apply as Teacher</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="is_student" id="is_student" onchange="toggleStudentFields()">
+                        <span>Apply as Student</span>
+                    </label>
+                </div>
+                <div id="student-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="year">Year:</label>
+                        <select name="year" id="year" required onchange="updateSemesters()">
+                            <option value="">Select Year</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="semester">Semester:</label>
+                        <select name="semester" id="semester" required>
+                            <option value="">Select Semester</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="class_name" placeholder="Class Name" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Signup</button>
+            </form>
+        </div>
+        <div class="form-actions">
+            <button type="button" onclick="resetForm()" class="btn btn-secondary btn-small">Refresh</button>
+            <a href="{% url 'index' %}" class="btn btn-secondary btn-small">Back to Home</a>
+        </div>
     </div>
-    <div class="form-actions">
-        <button type="button" onclick="resetForm()" class="btn btn-secondary btn-small">Refresh</button>
-        <a href="{% url 'index' %}" class="btn btn-secondary btn-small">Back to Home</a>
-    </div>
-</div>
-{% endblock %}
+</body>
+<script src="{% static 'js/scripts.js' %}"></script>
+</html>

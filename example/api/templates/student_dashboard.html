@@ -1,20 +1,255 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
 
-{% block content %}
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal overflow */
+        }
+
+        .dashboard-container {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        h1, h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .videos-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .video-card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .video-card video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .video-details {
+            padding: 15px;
+        }
+
+        .video-details h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .posts {
+            margin-top: 20px;
+        }
+
+        .post-box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-author {
+            font-size: 0.8em;
+            color: #777;
+        }
+
+        .post-content {
+            line-height: 1.2;
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
+        .followup-container {
+            margin-top: 10px;
+            margin-left: 20px;
+            padding: 5px;
+            border: 1px solid #007bff;
+            background-color: #f1f8ff;
+            border-radius: 5px;
+        }
+
+        .followup-box {
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            padding: 5px;
+            margin-top: 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .followup-content {
+            line-height: 1.2;
+        }
+
+        .followup-author, .followup-date {
+            font-size: 0.7em;
+            color: #777;
+        }
+
+        .followup-form {
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        .post-box.admin-announcement {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .admin-announcement .post-author,
+        .admin-announcement .post-content {
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons {
+            flex-direction: column;
+            }
+
+            .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            }
+
+            .btn.btn-secondary {
+            width: auto; /* Adjust the width of the logout button */
+            }
+
+            .videos-container {
+            grid-template-columns: 1fr;
+            }
+
+            .table-responsive {
+            overflow-x: scroll;
+            }
+
+            #teachers-section {
+            overflow-x: auto; /* Add scroll feature to the "Submit Assignment" section */
+            }
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px; /* Reduce font size */
+        }
+        }
+    </style>
+</head>
+<body>
     <div class="dashboard-container">
         <header>
             <h1>Student Dashboard</h1>
             <p>Welcome, {{ user.username }}!</p>
             <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
         </header>
+        <div class="container">
+            {% if messages %}
+                <ul class="message-list">
+                    {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
 
         <div class="action-buttons">
-            <button onclick="showSection('notes'); saveCurrentSection('notes')">See Notes</button>
-            <button onclick="showSection('lectures'); saveCurrentSection('lectures')">See Lectures</button>
-            <button onclick="showSection('assignments'); saveCurrentSection('assignments')">See Assignments</button>
-            <button onclick="showSection('teachers'); saveCurrentSection('teachers')">Submit Assignment</button>
-            <button onclick="showSection('blog'); saveCurrentSection('blog')">Blog</button>
-        </div>
+            <button class="btn" onclick="showSection('notes'); saveCurrentSection('notes')">See Notes</button>
+            <button class="btn" onclick="showSection('lectures'); saveCurrentSection('lectures')">See Lectures</button>
+            <button class="btn" onclick="showSection('assignments'); saveCurrentSection('assignments')">See Assignments</button>
+            <button class="btn" onclick="showSection('teachers'); saveCurrentSection('teachers')">Submit Assignment</button>
+            <button class="btn" onclick="showSection('blog'); saveCurrentSection('blog')">Blog</button>
+        </div>        
 
         <div id="notes-section" class="section" style="display: none;">
             <h2>Uploaded Notes</h2>
@@ -220,78 +455,7 @@
 
             document.addEventListener('DOMContentLoaded', loadCurrentSection);
         </script>
-        <style>
-            .posts {
-                margin-top: 20px;
-            }
-            .post-box {
-                border: 1px solid #ccc;
-                padding: 15px;
-                margin-bottom: 15px;
-                border-radius: 5px;
-                box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-            }
-            .post-author {
-                font-size: 0.8em;
-                color: #777;
-            }
-            .post-content {
-                line-height: 1.2;
-            }
-            .inline-form {
-                display: inline;
-            }
-            .followup-container {
-                margin-top: 10px;
-                margin-left: 20px; /* Move the follow-up section to the right */
-                padding: 5px; /* Reduced padding */
-                border: 1px solid #007bff; /* Blue border for highlighting */
-                background-color: #f1f8ff; /* Light blue background for highlighting */
-                border-radius: 5px;
-            }
-            .followup-box {
-                border: 1px solid #ddd;
-                background-color: #f9f9f9;
-                padding: 5px; /* Reduced padding */
-                margin-top: 5px; /* Reduced margin */
-                border-radius: 4px;
-                font-size: 0.9em; /* Smaller font size */
-            }
-            .followup-content {
-                line-height: 1.2;
-            }
-            .followup-author, .followup-date {
-                font-size: 0.7em; /* Smaller font size */
-                color: #777;
-            }
-            .followup-form {
-                margin-top: 5px; /* Reduced margin */
-                font-size: 0.9em; /* Smaller font size */
-            }
-            
-            .btn {
-                display: inline-block;
-                padding: 10px 20px;
-                background-color: var(--primary-color);
-                color: white;
-                text-decoration: none;
-                border-radius: 5px;
-                transition: background-color 0.3s ease;
-                border: none;
-                cursor: pointer;
-                font-size: 16px;
-                text-align: center;
-            }
-            
-            /* Styles for admin announcement post box */
-            .post-box.admin-announcement {
-                background-color: #f8d7da; /* Red background for admin announcements */
-                border-color: #f5c6cb; /* Red border for admin announcements */
-            }
-            .admin-announcement .post-author,
-            .admin-announcement .post-content {
-                color: #721c24; /* Dark red color for text */
-            }
-        </style>            
+        <script src="{% static 'js/scripts.js' %}"></script>
     </div>
-{% endblock %}
+</body>
+</html>

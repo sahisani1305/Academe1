@@ -7,11 +7,12 @@ from pymongo import MongoClient
 import re
 from django.contrib.auth import logout
 from django.shortcuts import render, redirect, get_object_or_404
-
+from bson import ObjectId
 from django.conf import settings
 from .models import PDFFile, VideoFile, AssignmentFile, TeacherApprovalRequest, ActivityLog
-from .forms import UploadFileForm
+from .forms import UploadFileForm, UploadAssignmentForm
 import datetime
+from datetime import datetime, timedelta
 
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
@@ -36,16 +37,6 @@ def login_view(request):
         else:
             messages.error(request, 'Invalid username or password. Please try again.')
     return render(request, 'login.html')
-
-import re
-from django.shortcuts import render, redirect
-from django.contrib.auth.models import User, Group
-from django.contrib import messages
-from pymongo import MongoClient
-
-# Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client.academe
 
 def signup_view(request):
     if request.method == 'POST':
@@ -188,16 +179,6 @@ def reject_teacher(_, pk):
     approval_request.delete()
     return redirect('admin_dashboard')
 
-from .forms import UploadAssignmentForm
-
-
-from bson import ObjectId
-from datetime import datetime
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-import os
-
-@login_required
 def student_dashboard(request):
     teachers_collection = db.teacher
     tchr = list(teachers_collection.find({}, {"_id": 0, "name": 1, "id_number": 1, "username": 1}))
@@ -302,13 +283,6 @@ def fetch_data_from_db():
 
     return teachers, students, activity_logs, deletion_logs
 
-from bson import ObjectId
-from datetime import datetime
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-import os
-
-@login_required
 def teacher_dashboard(request):
     assignment_collection = db.assignments
     students_collection = db.student
@@ -408,9 +382,6 @@ def teacher_dashboard(request):
         'student_assignments': student_assignments,
         "posts":posts
     })
-
-
-from datetime import datetime, timedelta
 
 def handle_blog_posts(request):
     user = request.user

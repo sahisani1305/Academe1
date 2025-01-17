@@ -1,6 +1,83 @@
-{% extends 'base.html' %}
+{% load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Academe</title>
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
 
-{% block content %}
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .home-container {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        .button-container .btn {
+            display: inline-block;
+            padding: 10px 15px; /* Adjust padding for button size */
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: center;
+            margin: 0 5px; /* Default margin for larger screens */
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            .home-container {
+                padding: 20px;
+            }
+
+            .button-container .btn {
+                margin: 5px; /* Vertical and horizontal spacing for mobile view */
+                padding: 8px 12px; /* Adjust padding for smaller buttons */
+                font-size: 14px; /* Smaller font size for mobile view */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .home-container {
+                padding: 10px;
+            }
+
+            .button-container .btn {
+                margin: 5px; /* Spacing for mobile view */
+                padding: 6px 10px; /* Further reduced padding for smaller buttons */
+                font-size: 12px; /* Further reduced font size for mobile view */
+            }
+        }
+    </style>
+</head>
+<body>
     <div class="home-container">
         <h1>Welcome to Academe</h1>
         <p>Academe is your go-to platform for learning and growth. Join us and embark on an exciting journey of knowledge and discovery.</p>
@@ -9,4 +86,20 @@
             <a href="{% url 'signup' %}" class="btn">Signup</a>
         </div>
     </div>
-{% endblock %}
+</body>
+<body>
+    <div class="container">
+        {% if messages %}
+            <ul class="message-list">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% block content %}
+        {% endblock %}
+    </div>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+
+</html>

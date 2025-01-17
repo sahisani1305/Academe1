@@ -27,9 +27,11 @@ h1, h2 {
     color: var(--primary-color);
     margin-bottom: 20px;
 }
+
 .posts {
     margin-top: 20px;
 }
+
 .post-box {
     border: 1px solid #ccc;
     padding: 15px;
@@ -37,16 +39,20 @@ h1, h2 {
     border-radius: 5px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
+
 .post-author {
     font-size: 0.8em;
     color: #777;
 }
+
 .post-content {
     line-height: 1.2;
 }
+
 .inline-form {
     display: inline;
 }
+
 .followup-container {
     margin-top: 10px;
     margin-left: 20px; /* Move the follow-up section to the right */
@@ -55,6 +61,7 @@ h1, h2 {
     background-color: #f1f8ff; /* Light blue background for highlighting */
     border-radius: 5px;
 }
+
 .followup-box {
     border: 1px solid #ddd;
     background-color: #f9f9f9;
@@ -63,13 +70,16 @@ h1, h2 {
     border-radius: 4px;
     font-size: 0.9em; /* Smaller font size */
 }
+
 .followup-content {
     line-height: 1.2;
 }
+
 .followup-author, .followup-date {
     font-size: 0.7em; /* Smaller font size */
     color: #777;
 }
+
 .followup-form {
     margin-top: 5px; /* Reduced margin */
     font-size: 0.9em; /* Smaller font size */
@@ -94,6 +104,7 @@ h1, h2 {
     background-color: #f8d7da; /* Red background for admin announcements */
     border-color: #f5c6cb; /* Red border for admin announcements */
 }
+
 .admin-announcement .post-author,
 .admin-announcement .post-content {
     color: #721c24; /* Dark red color for text */
@@ -323,68 +334,23 @@ textarea {
     .videos-container {
         grid-template-columns: 1fr;
     }
-}
 
-@media (max-width: 480px) {
     .form-container {
         width: 90%;
         margin: 20px auto;
     }
-}
-/* Signup Page Styles */
-.signup-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 40px;
-}
 
-.signup-form h1 {
-    text-align: center;
-    margin-bottom: 20px;
-}
+    .post-box {
+        padding: 10px;
+    }
 
-.signup-form .form-group {
-    margin-bottom: 15px;
-}
+    .post-author {
+        font-size: 0.9em;
+    }
 
-.signup-form input[type="text"],
-.signup-form input[type="password"] {
-    width: calc(100% - 20px);
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-    box-sizing: border-box;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-    margin-right: 10px;
-}
-
-.form-actions {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 400px;
-    margin-top: 10px;
-}
-
-.form-actions .btn {
-    flex: 1;
-    margin: 0 5px;
+    .post-content {
+        line-height: 1.4;
+    }
 }
 
 @media (max-width: 480px) {
@@ -394,5 +360,14 @@ textarea {
 
     .form-actions .btn {
         margin: 5px 0;
+    }
+
+    .login-form h1,
+    .signup-form h1 {
+        font-size: 1.5em;
+    }
+
+    .video-details h3 {
+        font-size: 1.2em;
     }
 }
